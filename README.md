@@ -4,7 +4,7 @@ Sistem Informasi Perizinan Riset dan Magang, dengan identitas SIPRIMA Bappeda Ko
 
 ## Menjalankan
 
-Gunakan Node.js 22 atau lebih baru dan npm. Versi aktual terkunci dalam `package-lock.json`.
+Gunakan Node.js 22.13 atau lebih baru dan npm. Versi aktual terkunci dalam `package-lock.json`.
 
 ```sh
 npm ci
@@ -48,9 +48,9 @@ Registrasi membuat akun pemohon lokal. Reset sandi menampilkan tautan simulasi y
 - Pengajuan memuat semua 13 isian termasuk relasi tujuan dari form penelitian lama, lima jenis lampiran opsional, kode REG, dan status awal Review.
 - Modul **Pendaftaran magang**: pemohon membuat dan mengedit pendaftaran berstatus Diajukan; admin mengelola semua peserta, penempatan, pembimbing, catatan, serta status Diajukan/Diterima/Aktif/Selesai/Ditolak/Mengundurkan diri. Riwayat status tercatat, hanya admin dapat menghapus. Data yang dibuat manual oleh admin terkait akun admin tersebut.
 - Daftar magang memiliki enam filter, pencarian, pagination, ekspor CSV seluruh hasil filter, dan enam peserta sintetis. Jalur `/magang/baru`, `/magang/[id]`, `/magang/[id]/edit` tersedia. Pilihan unit/program adalah contoh, belum master data layanan resmi.
-- Surat pengantar kampus pada magang bersifat opsional: satu PDF/JPG/JPEG/PNG maksimum 5 MiB. Surat dapat diganti/dihapus saat mengedit dan diunduh pemilik atau admin dari detail. Berkas lama tetap tersimpan jika formulir diedit tanpa mengubah lampiran; penghapusan pendaftaran membersihkan berkasnya.
+- Berkas magang dibagi menjadi tujuh bagian opsional: Transkrip, Foto, File pendukung lainnya, Proposal, Daftar Riwayat Hidup, Surat Pengantar, dan Surat Pernyataan. Setiap bagian menerima satu PDF/JPG/JPEG/PNG maksimum 5 MiB (5.242.880 byte), dengan ukuran aktual, pratinjau PDF/gambar, penggantian, dan penghapusan terpisah. Detail menampilkan tabel berkas beserta tombol lihat/unduh bagi pemilik atau admin. Mengedit bagian lain mempertahankan berkas lama; menghapus pendaftaran membersihkan semua berkasnya.
 - Penelitian tetap berstatus Review; belum ada persetujuan penelitian, pembayaran, atau penerbitan surat otomatis. **Unduh laporan** mengambil laporan unggahan, sesuai perilaku menu lama yang salah dilabeli sebagai surat penelitian.
-- State browser versi 1 dimigrasi otomatis ke versi 2 untuk menambahkan magang tanpa menghapus akun, sesi, pengajuan, laporan, atau Blob lama. Nama database tetap sama agar data sebelumnya terbaca.
+- State browser versi 1/2 dimigrasi otomatis ke versi 3 tanpa menghapus akun, sesi, pengajuan, laporan, atau Blob lama. Surat kampus lama dipindahkan ke bagian Surat Pengantar dengan metadata dan byte yang sama. Nama database tetap sama agar data sebelumnya terbaca.
 - Data dan Blob disimpan dalam IndexedDB, transaksi metadata/berkas atomik, perubahan antar-tab disinkronkan melalui BroadcastChannel/fokus.
 - Semua operasi melewati kontrak async `ResearchRepository`. Repository memfilter dan memeriksa kepemilikan, termasuk unduhan, edit, hapus, dan upload. Ini hanya simulasi, bukan keamanan server.
 - Upload menerima PDF/JPG/PNG maksimum 5 MiB; validasi ekstensi dan MIME. Preview tidak memindai isi/malware. Gunakan dokumen sintetis saja.

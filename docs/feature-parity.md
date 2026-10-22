@@ -22,6 +22,7 @@ Referensi baca: `../siprima`, termasuk `docs/SIPRIMA_REBUILD_AUDIT.md` (22 Oktob
 
 ## Aturan dan keputusan
 
+- Permintaan lanjutan magang: tujuh bagian berkas opsional terpisah (Transkrip, Foto, File pendukung lainnya, Proposal, Daftar Riwayat Hidup, Surat Pengantar, Surat Pernyataan), ukuran aktual/batas 5 MiB, pratinjau PDF/gambar, serta tabel berkas dengan aksi lihat/unduh. Surat kampus lama menjadi Surat Pengantar.
 - Semua 13 isian penelitian dipertahankan: nama, tujuan, email, telepon, alamat, judul, penanggung jawab, lembaga, lokasi, tanggal mulai/akhir, nomor/tanggal surat pengantar.
 - Lima lampiran: surat pengantar, KTP, proposal, persetujuan izin magang, surat pernyataan. Form lama tidak mewajibkan file; preview mempertahankan opsional, dengan validasi format/ukuran bila diisi.
 - Status penelitian `Review` dipertahankan. Tidak menambah persetujuan/penolakan penelitian, pembayaran, penerbitan surat. Statistik Review hanya menghitung status awal, bukan aktivitas petugas nyata. Permintaan lanjutan pengguna menambahkan status tersendiri untuk modul magang.

@@ -152,9 +152,41 @@ export const internshipManagementSchema = z
   );
 export type InternshipInput = z.infer<typeof internshipSchema>;
 export type InternshipManagement = z.infer<typeof internshipManagementSchema>;
+export const internshipAttachmentKinds = [
+  "transcript",
+  "photo",
+  "supporting",
+  "proposal",
+  "cv",
+  "letter",
+  "statement",
+] as const;
+export type InternshipAttachmentKind =
+  (typeof internshipAttachmentKinds)[number];
+export type InternshipAttachmentChanges = Partial<
+  Record<InternshipAttachmentKind, File | null>
+>;
+export const internshipAttachmentLabels: Record<
+  InternshipAttachmentKind,
+  string
+> = {
+  transcript: "Transkrip",
+  photo: "Foto",
+  supporting: "File pendukung lainnya",
+  proposal: "Proposal",
+  cv: "Daftar Riwayat Hidup",
+  letter: "Surat Pengantar",
+  statement: "Surat Pernyataan",
+};
+export function formatFileSize(bytes: number) {
+  const value = bytes / (1024 * 1024);
+  return value > 0 && value < 0.01
+    ? "< 0,01 MiB"
+    : `${value.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MiB`;
+}
 export type Internship = InternshipInput &
   InternshipManagement & {
-    campusLetter?: FileMeta;
+    attachments?: Partial<Record<InternshipAttachmentKind, FileMeta>>;
     id: string;
     code: string;
     ownerId: string;

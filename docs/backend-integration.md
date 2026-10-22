@@ -2,7 +2,7 @@
 
 ## Batas demo
 
-`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 2 pada IndexedDB `siprima-demo-v1`, termasuk Blob; state lama versi 1 dimigrasi tanpa menghapus data sebelumnya. Ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration database server, API produksi, atau filesystem server penyimpan unggahan.
+`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 3 pada IndexedDB `siprima-demo-v1`, termasuk Blob; state lama versi 1/2 dimigrasi tanpa menghapus data sebelumnya. Ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration database server, API produksi, atau filesystem server penyimpan unggahan.
 
 Saat mengganti adapter dengan HTTP, pertahankan metode dan tipe di `domain.ts`. UI hanya menerima Snapshot yang sudah dibatasi, metadata berkas, dan hasil operasi. Untuk skala produksi, ganti snapshot penuh dengan query list berparameter (search, filter, cursor/page) dan detail per ID; halaman daftar kemudian dapat memanggil query tersebut. State UI dan form tetap dapat dipakai.
 
@@ -44,7 +44,7 @@ Otorisasi client tidak dapat melindungi data dari manipulasi browser. Production
 - Form admin mengizinkan entri manual dengan pemilik akun admin; hubungan ke akun peserta perlu rancangan invitation/claim saat backend, bukan pencocokan otomatis berdasarkan email.
 - Konfirmasi daftar unit/program/jenjang dan aturan transisi status resmi. Preview mengizinkan admin memilih seluruh status; pembimbing wajib ketika Aktif/Selesai. Catatan admin terlihat oleh pemohon, bukan catatan internal rahasia.
 - Query daftar dan ekspor perlu otorisasi/filter server yang sama; tanggal filter pengajuan memakai Asia/Jakarta. CSV menetralkan formula dari nilai pengguna.
-- Surat kampus opsional disimpan sebagai `Internship.campusLetter` (FileMeta) dan Blob. Parameter keempat `saveInternship` menerima File untuk mengganti, null untuk menghapus, undefined untuk mempertahankan. Metadata/bytes atomik, download hanya pemilik/admin, penghapusan pendaftaran membersihkan Blob. Field opsional kompatibel dengan data lama tanpa reset/migrasi baru. Adapter server perlu object storage privat, validasi berkas server, dan pemeriksaan akses yang sama.
+- Tujuh berkas opsional disimpan pada `Internship.attachments` dengan key `transcript`, `photo`, `supporting`, `proposal`, `cv`, `letter`, `statement`. Nilai adalah FileMeta dan byte disimpan sebagai Blob. Parameter keempat `saveInternship` menerima objek perubahan per key: File untuk mengganti, null untuk menghapus, undefined untuk mempertahankan. Semua file divalidasi sebelum transaksi; metadata/bytes atomik, download hanya pemilik/admin, penghapusan pendaftaran membersihkan seluruh Blob. Migrasi versi 3 memindahkan `campusLetter` lama ke `attachments.letter`, mempertahankan ID dan byte serta menghapus field lama agar tidak muncul kembali setelah penghapusan. Adapter server perlu object storage privat, validasi berkas server, dan pemeriksaan akses yang sama.
 - Belum mencakup absensi, penilaian, sertifikat, atau notifikasi email. Status penelitian tetap terpisah dari status magang.
 
 Audit lama menyebut migration inti belum lengkap. Pada fase backend, baca **definisi tabel saja** dari salinan dump sesuai kebutuhan, petakan ID dan hubungan, lalu siapkan migration lengkap serta uji jumlah/relasi/berkas hilang. Jangan impor data pribadi ke preview ini.

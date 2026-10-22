@@ -10,6 +10,7 @@ import {
   validateFile,
   internshipSchema,
   internshipManagementSchema,
+  internshipAttachmentKinds,
 } from "./domain";
 import type {
   Application,
@@ -26,13 +27,14 @@ import type {
   Internship,
   InternshipInput,
   InternshipManagement,
+  InternshipAttachmentChanges,
 } from "./domain";
 import { sampleInput, samplePdf } from "./sample";
 import { seedInternships } from "./internships";
 
 type StoredUser = User & { passwordDigest: string };
 type State = {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   internships: Internship[];
   users: StoredUser[];
   purposes: Purpose[];
@@ -68,7 +70,7 @@ export interface ResearchRepository {
     input: InternshipInput,
     id?: string,
     management?: InternshipManagement,
-    campusLetter?: File | null,
+    files?: InternshipAttachmentChanges,
   ): Promise<string>;
   deleteInternship(id: string): Promise<void>;
 }
@@ -149,7 +151,7 @@ async function seed(): Promise<State> {
     attachments: {},
   }));
   return {
-    version: 2,
+    version: 3,
     internships: seedInternships(),
     users,
     purposes: [
@@ -205,16 +207,25 @@ async function transaction<T>(
     req.onsuccess = () => {
       try {
         const state: State = req.result ?? initial;
-        if (state.version !== 1 && state.version !== 2)
+        if (![1, 2, 3].includes(state.version))
           throw new Error(
             "Versi data demo tidak dikenali. Reset data demo untuk melanjutkan.",
           );
-        const migrated = state.version === 1;
-        if (migrated) {
+        const migrated = state.version !== 3;
+        if (state.version === 1) {
           state.internships = seedInternships().filter((a) =>
             state.users.some((u) => u.id === a.ownerId),
           );
-          state.version = 2;
+        }
+        if (migrated) {
+          for (const item of state.internships) {
+            const legacy = item as Internship & { campusLetter?: FileMeta };
+            item.attachments ??= {};
+            if (legacy.campusLetter)
+              item.attachments.letter = legacy.campusLetter;
+            delete legacy.campusLetter;
+          }
+          state.version = 3;
         }
         value = action(state);
         if (write || !req.result || migrated) store.put(state, "current");
@@ -443,12 +454,16 @@ export const repository: ResearchRepository = {
     }, true),
   getFile: (id) =>
     transaction((s) => {
-      const internship = s.internships.find((a) => a.campusLetter?.id === id);
+      const internship = s.internships.find((a) =>
+        Object.values(a.attachments ?? {}).some((f) => f.id === id),
+      );
       if (internship) {
         const u = actor(s);
         if (u.role !== "admin" && internship.ownerId !== u.id)
-          throw new Error("Surat kampus tidak dapat diakses.");
-        const meta = internship.campusLetter!;
+          throw new Error("Berkas magang tidak dapat diakses.");
+        const meta = Object.values(internship.attachments ?? {}).find(
+          (f) => f.id === id,
+        )!;
         if (!s.blobs[id]) throw new Error("Berkas tidak tersedia.");
         return { meta, blob: s.blobs[id] };
       }
@@ -531,9 +546,15 @@ export const repository: ResearchRepository = {
       for (const [token, reset] of Object.entries(s.resets))
         if (reset.userId === id) delete s.resets[token];
     }, true),
-  saveInternship: async (input, id, management, campusLetter) => {
+  saveInternship: async (input, id, management, files = {}) => {
     const fields = internshipSchema.parse(input);
-    if (campusLetter) checkFile(campusLetter);
+    if (
+      Object.keys(files).some(
+        (key) => !internshipAttachmentKinds.some((kind) => kind === key),
+      )
+    )
+      throw new Error("Jenis berkas magang tidak dikenal.");
+    for (const file of Object.values(files)) if (file) checkFile(file);
     const controls = management
       ? internshipManagementSchema.parse(management)
       : undefined;
@@ -573,14 +594,18 @@ export const repository: ResearchRepository = {
       if (!previous || nextStatus !== previous.status)
         record.history.push({ status: nextStatus, at: now, by: u.name });
       Object.assign(record, fields, controls, { updatedAt: now });
-      // undefined preserves the saved letter, null removes it; metadata and bytes commit together.
-      if (campusLetter !== undefined) {
-        if (record.campusLetter) delete s.blobs[record.campusLetter.id];
-        if (campusLetter) {
-          const meta = fileMeta(campusLetter);
-          s.blobs[meta.id] = campusLetter;
-          record.campusLetter = meta;
-        } else delete record.campusLetter;
+      // Commit all file changes atomically; untouched sections retain their saved bytes.
+      record.attachments ??= {};
+      for (const kind of internshipAttachmentKinds) {
+        const file = files[kind];
+        if (file === undefined) continue;
+        const previousFile = record.attachments[kind];
+        if (previousFile) delete s.blobs[previousFile.id];
+        if (file) {
+          const meta = fileMeta(file);
+          s.blobs[meta.id] = file;
+          record.attachments[kind] = meta;
+        } else delete record.attachments[kind];
       }
       if (!previous) s.internships.push(record);
       return record.id;
@@ -591,7 +616,9 @@ export const repository: ResearchRepository = {
       admin(s);
       const record = s.internships.find((a) => a.id === id);
       if (!record) throw new Error("Pendaftaran tidak ditemukan.");
-      if (record.campusLetter) delete s.blobs[record.campusLetter.id];
+      Object.values(record.attachments ?? {}).forEach(
+        (f) => delete s.blobs[f.id],
+      );
       s.internships = s.internships.filter((a) => a.id !== id);
     }, true),
   resetDemo: async () => {

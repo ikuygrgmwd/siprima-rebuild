@@ -9,6 +9,8 @@
 
 ## Keputusan
 
+- Unggahan magang kini memiliki tujuh bagian: Transkrip, Foto, File pendukung lainnya, Proposal, Daftar Riwayat Hidup, Surat Pengantar, dan Surat Pernyataan. Semuanya opsional, satu PDF/JPG/JPEG/PNG maksimum 5 MiB per bagian. Form menampilkan batas/ukuran aktual; detail menampilkan tabel lihat/unduh. Pratinjau PDF menggunakan PDF.js dengan worker lokal, gambar memakai Blob URL. State v3 memigrasi surat kampus lama tanpa kehilangan berkas. Total 19 tes otomatis lulus.
+
 - Tambahan lanjutan: unggahan surat pengantar kampus opsional (PDF/JPG/JPEG/PNG, maksimum 5 MiB), penggantian/penghapusan, unduhan pemilik/admin, dan cleanup berkas atomik. Total 17 tes otomatis lulus. Data magang lama tanpa lampiran tetap terbaca.
 
 - npm satu-satunya package manager; lockfile disertakan; tidak ada ORM/backend/secret.

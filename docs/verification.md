@@ -6,7 +6,7 @@
 | --- | --- |
 | `npm run lint` | Lulus tanpa error/warning |
 | `npm run typecheck` | Lulus |
-| `npm test` | 17/17 lulus, Node test runner + fake-indexeddb (termasuk magang dan surat kampus) |
+| `npm test` | 19/19 lulus, Node test runner + fake-indexeddb (termasuk tujuh berkas magang dan migrasi surat kampus) |
 | `npm run build` | Lulus dengan Webpack; enam halaman statis terbangun dan ruang kerja catch-all dinamis |
 | `npm start -- --port 3002` | Berjalan tanpa secret/database; `/`, `/masuk`, `/pengajuan`, `/akun` memberi HTTP 200 |
 | `npm audit --omit=dev` | 0 kerentanan runtime pada waktu pemeriksaan |
@@ -61,7 +61,14 @@ Build Turbopack gagal pada worker PostCSS di Windows ini, baik sandbox maupun pe
 - Tiga tes tambahan: pendaftaran tanpa surat, persistensi bytes dan otorisasi download; penerimaan PDF/JPG/JPEG/PNG, penggantian/penghapusan/cleanup Blob; penolakan file kosong, terlalu besar, ekstensi/tipe tidak cocok tanpa penyimpanan parsial. Edit biasa mempertahankan surat, sedangkan pemohon yang telah diproses tidak dapat menggantinya.
 - Browser pemohon: pemilihan PDF sintetis melalui file picker asli, simpan, refresh, unduh berkas (hash sama dengan sumber), hapus lampiran melalui edit, dan simpan tanpa surat terverifikasi. Validasi ini menggunakan berkas contoh, bukan surat pribadi. Screenshot bagian unggah: `screenshots/campus-letter-demo.jpg`.
 
-### Cakupan lingkungan
+### Tujuh bagian berkas magang
+
+- Dua tes tambahan mencakup penyimpanan tujuh berkas secara atomik, penggantian/penghapusan per bagian tanpa memengaruhi bagian lain, penolakan satu berkas tidak valid tanpa penyimpanan parsial, isolasi pemilik, cleanup semua Blob, serta migrasi state v2 ke v3 yang mempertahankan metadata/byte surat kampus lama.
+- Browser pemohon: tujuh contoh PDF dipilih, pratinjau Transkrip dirender pada canvas, lalu seluruhnya disimpan dan tetap ada setelah refresh. Pratinjau menggunakan PDF.js dengan worker yang dibundel lokal, tanpa mengirim dokumen ke layanan lain.
+- JPG sintetis dipilih melalui file picker asli dan pratinjau gambar berhasil dimuat. Build Webpack (termasuk TypeScript), lint, dan 19 tes lulus setelah pembaruan. Build perlu izin filesystem normal karena sandbox Windows menolak pembuatan salah satu folder output; build di luar sandbox berhasil.
+- Pada viewport CSS 390 px, ketujuh kartu tersusun satu kolom, lebar dokumen 375 px, tanpa overflow horizontal halaman. Override viewport dikembalikan. Screenshot: `screenshots/internship-files-demo.jpg` dan `screenshots/internship-documents-demo.jpg`.
+
+### Cakupan lingkungan terakhir
 
 - Browser Chromium in-app di Windows; Safari/Firefox, pembaca layar nyata, perangkat fisik belum diuji.
 - Reset sandi penuh, delete akun/pengajuan beserta cascade dan validasi file negatif diuji repository; belum seluruh kombinasinya di browser.

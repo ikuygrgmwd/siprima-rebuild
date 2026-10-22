@@ -14,28 +14,141 @@ import {
 } from "../src/lib/internships";
 import { sampleFile, sampleInput } from "../src/lib/sample";
 import { MAX_FILE_SIZE } from "../src/lib/domain";
+import {
+  internshipAttachmentKinds,
+  type InternshipAttachmentChanges,
+} from "../src/lib/domain";
 
 const input = seedInternships()[0];
+test("all seven attachment sections save atomically, isolate changes and clean up on delete", async () => {
+  await repository.loginDemo("pemohon");
+  const changes = Object.fromEntries(
+    internshipAttachmentKinds.map((kind) => [
+      kind,
+      sampleFile(`contoh-${kind}`),
+    ]),
+  ) as InternshipAttachmentChanges;
+  const id = await repository.saveInternship(
+    input,
+    undefined,
+    undefined,
+    changes,
+  );
+  const initial = (await repository.snapshot()).internships.find(
+    (a) => a.id === id,
+  )!;
+  assert.equal(Object.keys(initial.attachments!).length, 7);
+  for (const kind of internshipAttachmentKinds)
+    assert.equal(
+      await (
+        await repository.getFile(initial.attachments![kind]!.id)
+      ).blob.text(),
+      await changes[kind]!.text(),
+    );
+  await repository.saveInternship(input, id, undefined, {
+    photo: null,
+    proposal: sampleFile("proposal-revisi"),
+  });
+  const edited = (await repository.snapshot()).internships.find(
+    (a) => a.id === id,
+  )!;
+  assert.equal(edited.attachments?.photo, undefined);
+  assert.notEqual(
+    edited.attachments?.proposal?.id,
+    initial.attachments!.proposal!.id,
+  );
+  assert.deepEqual(edited.attachments?.letter, initial.attachments!.letter);
+  assert.deepEqual(
+    edited.attachments?.transcript,
+    initial.attachments!.transcript,
+  );
+  await assert.rejects(repository.getFile(initial.attachments!.photo!.id));
+  await assert.rejects(
+    repository.saveInternship(input, id, undefined, {
+      cv: sampleFile("cv-revisi"),
+      supporting: new File([], "kosong.pdf", { type: "application/pdf" }),
+    }),
+  );
+  assert.deepEqual(
+    (await repository.snapshot()).internships.find((a) => a.id === id)!
+      .attachments,
+    edited.attachments,
+  );
+  await repository.login("raka@example.test", "demo12345");
+  for (const file of Object.values(edited.attachments!))
+    await assert.rejects(repository.getFile(file.id), /diakses/);
+  await repository.loginDemo("admin");
+  await repository.deleteInternship(id);
+  await editStoredState((s) => {
+    for (const file of [
+      ...Object.values(initial.attachments!),
+      ...Object.values(edited.attachments!),
+    ])
+      assert.ok(!(s.blobs as Record<string, Blob>)[file.id]);
+  });
+});
+
+test("v2 campus letter migrates into Surat Pengantar without losing its bytes or other records", async () => {
+  await repository.loginDemo("pemohon");
+  const file = sampleFile("surat-sebelum-upgrade");
+  const id = await repository.saveInternship(input, undefined, undefined, {
+    letter: file,
+  });
+  const before = await repository.snapshot();
+  const meta = before.internships.find((a) => a.id === id)!.attachments!
+    .letter!;
+  await editStoredState((s) => {
+    s.version = 2;
+    for (const item of s.internships as Record<string, unknown>[]) {
+      if (item.id === id) item.campusLetter = meta;
+      delete item.attachments;
+    }
+  });
+  const after = await repository.snapshot();
+  assert.deepEqual(
+    after.internships.find((a) => a.id === id)!.attachments!.letter,
+    meta,
+  );
+  assert.deepEqual(after.user, before.user);
+  assert.deepEqual(after.applications, before.applications);
+  assert.equal(
+    await (await repository.getFile(meta.id)).blob.text(),
+    await file.text(),
+  );
+  await repository.saveInternship(input, id, undefined, { letter: null });
+  assert.equal(
+    (await repository.snapshot()).internships.find((a) => a.id === id)!
+      .attachments?.letter,
+    undefined,
+  );
+  assert.equal(
+    (await repository.snapshot()).internships.find((a) => a.id === id)!
+      .attachments?.letter,
+    undefined,
+  );
+});
 test("campus letters are optional, persist, preserve on edits and enforce ownership", async () => {
   await repository.loginDemo("pemohon");
   const emptyId = await repository.saveInternship(input);
   assert.equal(
     (await repository.snapshot()).internships.find((a) => a.id === emptyId)!
-      .campusLetter,
+      .attachments?.letter,
     undefined,
   );
   const file = sampleFile("surat-kampus");
-  const id = await repository.saveInternship(input, undefined, undefined, file);
+  const id = await repository.saveInternship(input, undefined, undefined, {
+    letter: file,
+  });
   const meta = (await repository.snapshot()).internships.find(
     (a) => a.id === id,
-  )!.campusLetter!;
+  )!.attachments!.letter!;
   await repository.saveInternship(
     { ...input, major: "Jurusan diperbarui" },
     id,
   );
   assert.deepEqual(
     (await repository.snapshot()).internships.find((a) => a.id === id)!
-      .campusLetter,
+      .attachments?.letter,
     meta,
   );
   assert.equal(
@@ -47,7 +160,7 @@ test("campus letters are optional, persist, preserve on edits and enforce owners
   await repository.login("raka@example.test", "demo12345");
   await assert.rejects(repository.getFile(meta.id), /diakses/);
   await assert.rejects(
-    repository.saveInternship(input, id, undefined, sampleFile()),
+    repository.saveInternship(input, id, undefined, { letter: sampleFile() }),
     /diakses/,
   );
   await repository.loginDemo("admin");
@@ -62,7 +175,7 @@ test("campus letters are optional, persist, preserve on edits and enforce owners
   });
   await repository.loginDemo("pemohon");
   await assert.rejects(
-    repository.saveInternship(input, id, undefined, null),
+    repository.saveInternship(input, id, undefined, { letter: null }),
     /sudah diproses/,
   );
   assert.equal((await repository.getFile(meta.id)).meta.name, file.name);
@@ -78,10 +191,10 @@ test("PDF, JPG, JPEG and PNG replacements, removal and record deletion clean up 
     new File(["image fixture"], "surat.jpeg", { type: "image/jpeg" }),
     new File(["image fixture"], "surat.png", { type: "image/png" }),
   ]) {
-    await repository.saveInternship(input, id, undefined, file);
+    await repository.saveInternship(input, id, undefined, { letter: file });
     const meta = (await repository.snapshot()).internships.find(
       (a) => a.id === id,
-    )!.campusLetter!;
+    )!.attachments!.letter!;
     assert.equal(
       await (await repository.getFile(meta.id)).blob.text(),
       await file.text(),
@@ -94,19 +207,21 @@ test("PDF, JPG, JPEG and PNG replacements, removal and record deletion clean up 
     }
     oldId = meta.id;
   }
-  await repository.saveInternship(input, id, undefined, null);
+  await repository.saveInternship(input, id, undefined, { letter: null });
   assert.equal(
     (await repository.snapshot()).internships.find((a) => a.id === id)!
-      .campusLetter,
+      .attachments?.letter,
     undefined,
   );
   await editStoredState((s) =>
     assert.ok(!(s.blobs as Record<string, Blob>)[oldId!]),
   );
-  await repository.saveInternship(input, id, undefined, sampleFile());
+  await repository.saveInternship(input, id, undefined, {
+    letter: sampleFile(),
+  });
   const meta = (await repository.snapshot()).internships.find(
     (a) => a.id === id,
-  )!.campusLetter!;
+  )!.attachments!.letter!;
   await repository.loginDemo("admin");
   await repository.deleteInternship(id);
   await assert.rejects(repository.getFile(meta.id));
@@ -117,12 +232,9 @@ test("PDF, JPG, JPEG and PNG replacements, removal and record deletion clean up 
 
 test("invalid campus letters reject the entire write without damaging the saved letter", async () => {
   await repository.loginDemo("pemohon");
-  const id = await repository.saveInternship(
-    input,
-    undefined,
-    undefined,
-    sampleFile(),
-  );
+  const id = await repository.saveInternship(input, undefined, undefined, {
+    letter: sampleFile(),
+  });
   const before = await repository.snapshot();
   for (const file of [
     new File([], "empty.pdf", { type: "application/pdf" }),
@@ -137,18 +249,18 @@ test("invalid campus letters reject the entire write without damaging the saved 
         { ...input, major: "Tidak boleh tersimpan" },
         id,
         undefined,
-        file,
+        { letter: file },
       ),
     );
     await assert.rejects(
-      repository.saveInternship(input, undefined, undefined, file),
+      repository.saveInternship(input, undefined, undefined, { letter: file }),
     );
   }
   assert.deepEqual(
     (await repository.snapshot()).internships,
     before.internships,
   );
-  const meta = before.internships.find((a) => a.id === id)!.campusLetter!;
+  const meta = before.internships.find((a) => a.id === id)!.attachments!.letter!;
   assert.ok((await repository.getFile(meta.id)).blob.size > 0);
 });
 beforeEach(async () => {

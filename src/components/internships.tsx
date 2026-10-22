@@ -13,7 +13,6 @@ import {
   Eye,
   GraduationCap,
   ListFilter,
-  Paperclip,
   Pencil,
   Plus,
   Search,
@@ -34,6 +33,8 @@ import {
   validateFile,
   type Internship,
   type InternshipInput,
+  type InternshipAttachmentChanges,
+  type InternshipAttachmentKind,
   type InternshipManagement,
 } from "@/lib/domain";
 import {
@@ -43,12 +44,11 @@ import {
   type InternshipFilters,
 } from "@/lib/internships";
 import { repository } from "@/lib/repository";
-import { sampleFile } from "@/lib/sample";
+import { InternshipUploads, InternshipDocuments } from "./internship-files";
 import { useDemo } from "./demo-provider";
 import { PageHeading } from "./page-heading";
 import {
   Confirm,
-  DownloadButton,
   Empty,
   ErrorMessage,
   Field,
@@ -484,18 +484,14 @@ export function InternshipForm({ id }: { id?: string }) {
   const user = data!.user!;
   const admin = user.role === "admin";
   const original = data!.internships.find((a) => a.id === id);
-  const [campusLetter, setCampusLetter] = useState<File | null | undefined>(
-    undefined,
-  );
-  const [letterError, setLetterError] = useState("");
-  const selectedLetter =
-    campusLetter === null
-      ? undefined
-      : (campusLetter ?? original?.campusLetter);
-  function selectLetter(file: File) {
+  const [files, setFiles] = useState<InternshipAttachmentChanges>({});
+  const [fileErrors, setFileErrors] = useState<
+    Partial<Record<InternshipAttachmentKind, string>>
+  >({});
+  function selectFile(kind: InternshipAttachmentKind, file: File) {
     const invalid = validateFile(file);
-    setLetterError(invalid ?? "");
-    if (!invalid) setCampusLetter(file);
+    setFileErrors((previous) => ({ ...previous, [kind]: invalid ?? "" }));
+    if (!invalid) setFiles((previous) => ({ ...previous, [kind]: file }));
   }
   const [error, setError] = useState("");
   const [controlErrors, setControlErrors] = useState<Record<string, string>>(
@@ -613,7 +609,7 @@ export function InternshipForm({ id }: { id?: string }) {
         onSubmit={handleSubmit(async (values) => {
           setError("");
           setControlErrors({});
-          if (letterError) return;
+          if (Object.values(fileErrors).some(Boolean)) return;
           if (admin) {
             const checked = internshipManagementSchema.safeParse(management);
             if (!checked.success) {
@@ -635,7 +631,7 @@ export function InternshipForm({ id }: { id?: string }) {
                   values,
                   id,
                   admin ? management : undefined,
-                  campusLetter,
+                  files,
                 ),
               id
                 ? "Pendaftaran magang diperbarui."
@@ -695,86 +691,16 @@ export function InternshipForm({ id }: { id?: string }) {
               </Field>
             </div>
           </section>
-          <section className="card form-section campus-letter">
-            <div className="form-section-heading">
-              <span>03</span>
-              <div>
-                <h2>
-                  Surat pengantar dari kampus{" "}
-                  <span className="badge gray">Opsional</span>
-                </h2>
-                <p>Pendaftaran tetap dapat dikirim tanpa surat pengantar.</p>
-              </div>
-            </div>
-            <Field
-              id="intern-campus-letter"
-              label="Unggah surat kampus"
-              error={letterError}
-            >
-              <input
-                id="intern-campus-letter"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                aria-invalid={Boolean(letterError)}
-                aria-describedby={`intern-campus-letter-hint${letterError ? " intern-campus-letter-error" : ""}`}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) selectLetter(file);
-                  e.target.value = "";
-                }}
-              />
-            </Field>
-            <p id="intern-campus-letter-hint" className="subtle-note">
-              PDF, JPG/JPEG, atau PNG · Maksimum 5 MiB · Satu berkas. Gunakan
-              dokumen contoh saat mencoba mode demo.
-            </p>
-            <div className="attachment-row">
-              <div className="attachment-label">
-                <Paperclip size={18} />
-                <div>
-                  <strong>
-                    {selectedLetter?.name ?? "Belum ada surat terlampir"}
-                  </strong>
-                  <small>
-                    {selectedLetter
-                      ? `${Math.max(1, Math.ceil(selectedLetter.size / 1024))} KB · ${campusLetter ? "Akan diunggah saat disimpan" : "Sudah tersimpan"}`
-                      : campusLetter === null
-                        ? "Surat akan dihapus saat perubahan disimpan."
-                        : "Tidak wajib diunggah."}
-                  </small>
-                </div>
-              </div>
-              <div className="attachment-actions">
-                {original?.campusLetter && campusLetter === undefined && (
-                  <DownloadButton
-                    id={original.campusLetter.id}
-                    name="Unduh surat"
-                  />
-                )}
-                <button
-                  type="button"
-                  className="button ghost small"
-                  onClick={() =>
-                    selectLetter(sampleFile("surat-kampus-contoh"))
-                  }
-                >
-                  Pakai contoh PDF
-                </button>
-                {(selectedLetter || letterError) && (
-                  <button
-                    type="button"
-                    className="button secondary small"
-                    onClick={() => {
-                      setCampusLetter(null);
-                      setLetterError("");
-                    }}
-                  >
-                    Hapus pilihan surat
-                  </button>
-                )}
-              </div>
-            </div>
-          </section>
+          <InternshipUploads
+            saved={original?.attachments}
+            changes={files}
+            errors={fileErrors}
+            select={selectFile}
+            remove={(kind) => {
+              setFiles((previous) => ({ ...previous, [kind]: null }));
+              setFileErrors((previous) => ({ ...previous, [kind]: "" }));
+            }}
+          />
           {admin && (
             <section className="card form-section">
               <div className="form-section-heading">
@@ -975,30 +901,7 @@ export function InternshipDetail({ id }: { id: string }) {
           </section>
         ))}
       </div>
-      <section className="card form-section campus-letter">
-        <div className="form-section-heading">
-          <Paperclip size={20} />
-          <div>
-            <h2>Surat pengantar dari kampus</h2>
-            <p>Lampiran opsional dari peserta magang.</p>
-          </div>
-        </div>
-        {a.campusLetter ? (
-          <div className="attachment-row">
-            <div className="attachment-label">
-              <div>
-                <strong>{a.campusLetter.name}</strong>
-                <small>
-                  {Math.max(1, Math.ceil(a.campusLetter.size / 1024))} KB
-                </small>
-              </div>
-            </div>
-            <DownloadButton id={a.campusLetter.id} name="Unduh surat kampus" />
-          </div>
-        ) : (
-          <p className="subtle-note">Peserta tidak melampirkan surat kampus.</p>
-        )}
-      </section>
+      <InternshipDocuments attachments={a.attachments} />
       <section className="card intern-history">
         <h2>Riwayat status</h2>
         <ol>
