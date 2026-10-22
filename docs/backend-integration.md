@@ -44,7 +44,8 @@ Otorisasi client tidak dapat melindungi data dari manipulasi browser. Production
 - Form admin mengizinkan entri manual dengan pemilik akun admin; hubungan ke akun peserta perlu rancangan invitation/claim saat backend, bukan pencocokan otomatis berdasarkan email.
 - Konfirmasi daftar unit/program/jenjang dan aturan transisi status resmi. Preview mengizinkan admin memilih seluruh status; pembimbing wajib ketika Aktif/Selesai. Catatan admin terlihat oleh pemohon, bukan catatan internal rahasia.
 - Query daftar dan ekspor perlu otorisasi/filter server yang sama; tanggal filter pengajuan memakai Asia/Jakarta. CSV menetralkan formula dari nilai pengguna.
-- Belum mencakup absensi, penilaian, sertifikat, dokumen pendaftaran magang terpisah, atau notifikasi email. Status penelitian tetap terpisah dari status magang.
+- Surat kampus opsional disimpan sebagai `Internship.campusLetter` (FileMeta) dan Blob. Parameter keempat `saveInternship` menerima File untuk mengganti, null untuk menghapus, undefined untuk mempertahankan. Metadata/bytes atomik, download hanya pemilik/admin, penghapusan pendaftaran membersihkan Blob. Field opsional kompatibel dengan data lama tanpa reset/migrasi baru. Adapter server perlu object storage privat, validasi berkas server, dan pemeriksaan akses yang sama.
+- Belum mencakup absensi, penilaian, sertifikat, atau notifikasi email. Status penelitian tetap terpisah dari status magang.
 
 Audit lama menyebut migration inti belum lengkap. Pada fase backend, baca **definisi tabel saja** dari salinan dump sesuai kebutuhan, petakan ID dan hubungan, lalu siapkan migration lengkap serta uji jumlah/relasi/berkas hilang. Jangan impor data pribadi ke preview ini.
 

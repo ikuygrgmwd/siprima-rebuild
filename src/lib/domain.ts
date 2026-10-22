@@ -154,6 +154,7 @@ export type InternshipInput = z.infer<typeof internshipSchema>;
 export type InternshipManagement = z.infer<typeof internshipManagementSchema>;
 export type Internship = InternshipInput &
   InternshipManagement & {
+    campusLetter?: FileMeta;
     id: string;
     code: string;
     ownerId: string;

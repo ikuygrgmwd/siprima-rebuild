@@ -6,7 +6,7 @@
 | --- | --- |
 | `npm run lint` | Lulus tanpa error/warning |
 | `npm run typecheck` | Lulus |
-| `npm test` | 14/14 lulus, Node test runner + fake-indexeddb (termasuk modul magang) |
+| `npm test` | 17/17 lulus, Node test runner + fake-indexeddb (termasuk magang dan surat kampus) |
 | `npm run build` | Lulus dengan Webpack; enam halaman statis terbangun dan ruang kerja catch-all dinamis |
 | `npm start -- --port 3002` | Berjalan tanpa secret/database; `/`, `/masuk`, `/pengajuan`, `/akun` memberi HTTP 200 |
 | `npm audit --omit=dev` | 0 kerentanan runtime pada waktu pemeriksaan |
@@ -55,6 +55,13 @@ Build Turbopack gagal pada worker PostCSS di Windows ini, baik sandbox maupun pe
 - Screenshot hasil: `screenshots/internships-demo.jpg`. Data dan semua identitas pada preview bersifat sintetis.
 
 ## Batas verifikasi
+
+### Surat kampus opsional
+
+- Tiga tes tambahan: pendaftaran tanpa surat, persistensi bytes dan otorisasi download; penerimaan PDF/JPG/JPEG/PNG, penggantian/penghapusan/cleanup Blob; penolakan file kosong, terlalu besar, ekstensi/tipe tidak cocok tanpa penyimpanan parsial. Edit biasa mempertahankan surat, sedangkan pemohon yang telah diproses tidak dapat menggantinya.
+- Browser pemohon: pemilihan PDF sintetis melalui file picker asli, simpan, refresh, unduh berkas (hash sama dengan sumber), hapus lampiran melalui edit, dan simpan tanpa surat terverifikasi. Validasi ini menggunakan berkas contoh, bukan surat pribadi. Screenshot bagian unggah: `screenshots/campus-letter-demo.jpg`.
+
+### Cakupan lingkungan
 
 - Browser Chromium in-app di Windows; Safari/Firefox, pembaca layar nyata, perangkat fisik belum diuji.
 - Reset sandi penuh, delete akun/pengajuan beserta cascade dan validasi file negatif diuji repository; belum seluruh kombinasinya di browser.

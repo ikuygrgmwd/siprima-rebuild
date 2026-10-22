@@ -68,6 +68,7 @@ export interface ResearchRepository {
     input: InternshipInput,
     id?: string,
     management?: InternshipManagement,
+    campusLetter?: File | null,
   ): Promise<string>;
   deleteInternship(id: string): Promise<void>;
 }
@@ -442,6 +443,15 @@ export const repository: ResearchRepository = {
     }, true),
   getFile: (id) =>
     transaction((s) => {
+      const internship = s.internships.find((a) => a.campusLetter?.id === id);
+      if (internship) {
+        const u = actor(s);
+        if (u.role !== "admin" && internship.ownerId !== u.id)
+          throw new Error("Surat kampus tidak dapat diakses.");
+        const meta = internship.campusLetter!;
+        if (!s.blobs[id]) throw new Error("Berkas tidak tersedia.");
+        return { meta, blob: s.blobs[id] };
+      }
       const a = s.applications.find((a) =>
         Object.values(a.attachments).some((f) => f.id === id),
       );
@@ -521,8 +531,9 @@ export const repository: ResearchRepository = {
       for (const [token, reset] of Object.entries(s.resets))
         if (reset.userId === id) delete s.resets[token];
     }, true),
-  saveInternship: async (input, id, management) => {
+  saveInternship: async (input, id, management, campusLetter) => {
     const fields = internshipSchema.parse(input);
+    if (campusLetter) checkFile(campusLetter);
     const controls = management
       ? internshipManagementSchema.parse(management)
       : undefined;
@@ -562,6 +573,15 @@ export const repository: ResearchRepository = {
       if (!previous || nextStatus !== previous.status)
         record.history.push({ status: nextStatus, at: now, by: u.name });
       Object.assign(record, fields, controls, { updatedAt: now });
+      // undefined preserves the saved letter, null removes it; metadata and bytes commit together.
+      if (campusLetter !== undefined) {
+        if (record.campusLetter) delete s.blobs[record.campusLetter.id];
+        if (campusLetter) {
+          const meta = fileMeta(campusLetter);
+          s.blobs[meta.id] = campusLetter;
+          record.campusLetter = meta;
+        } else delete record.campusLetter;
+      }
       if (!previous) s.internships.push(record);
       return record.id;
     }, true);
@@ -569,8 +589,9 @@ export const repository: ResearchRepository = {
   deleteInternship: (id) =>
     transaction((s) => {
       admin(s);
-      if (!s.internships.some((a) => a.id === id))
-        throw new Error("Pendaftaran tidak ditemukan.");
+      const record = s.internships.find((a) => a.id === id);
+      if (!record) throw new Error("Pendaftaran tidak ditemukan.");
+      if (record.campusLetter) delete s.blobs[record.campusLetter.id];
       s.internships = s.internships.filter((a) => a.id !== id);
     }, true),
   resetDemo: async () => {

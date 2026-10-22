@@ -13,8 +13,144 @@ import {
   seedInternships,
 } from "../src/lib/internships";
 import { sampleFile, sampleInput } from "../src/lib/sample";
+import { MAX_FILE_SIZE } from "../src/lib/domain";
 
 const input = seedInternships()[0];
+test("campus letters are optional, persist, preserve on edits and enforce ownership", async () => {
+  await repository.loginDemo("pemohon");
+  const emptyId = await repository.saveInternship(input);
+  assert.equal(
+    (await repository.snapshot()).internships.find((a) => a.id === emptyId)!
+      .campusLetter,
+    undefined,
+  );
+  const file = sampleFile("surat-kampus");
+  const id = await repository.saveInternship(input, undefined, undefined, file);
+  const meta = (await repository.snapshot()).internships.find(
+    (a) => a.id === id,
+  )!.campusLetter!;
+  await repository.saveInternship(
+    { ...input, major: "Jurusan diperbarui" },
+    id,
+  );
+  assert.deepEqual(
+    (await repository.snapshot()).internships.find((a) => a.id === id)!
+      .campusLetter,
+    meta,
+  );
+  assert.equal(
+    await (await repository.getFile(meta.id)).blob.text(),
+    await file.text(),
+  );
+  await repository.logout();
+  await assert.rejects(repository.getFile(meta.id), /masuk/);
+  await repository.login("raka@example.test", "demo12345");
+  await assert.rejects(repository.getFile(meta.id), /diakses/);
+  await assert.rejects(
+    repository.saveInternship(input, id, undefined, sampleFile()),
+    /diakses/,
+  );
+  await repository.loginDemo("admin");
+  assert.equal(
+    await (await repository.getFile(meta.id)).blob.text(),
+    await file.text(),
+  );
+  await repository.saveInternship(input, id, {
+    status: "Aktif",
+    mentor: "Pembimbing demo",
+    note: "",
+  });
+  await repository.loginDemo("pemohon");
+  await assert.rejects(
+    repository.saveInternship(input, id, undefined, null),
+    /sudah diproses/,
+  );
+  assert.equal((await repository.getFile(meta.id)).meta.name, file.name);
+});
+
+test("PDF, JPG, JPEG and PNG replacements, removal and record deletion clean up letter bytes", async () => {
+  await repository.loginDemo("pemohon");
+  const id = await repository.saveInternship(input);
+  let oldId: string | undefined;
+  for (const file of [
+    sampleFile(),
+    new File(["image fixture"], "surat.jpg", { type: "image/jpeg" }),
+    new File(["image fixture"], "surat.jpeg", { type: "image/jpeg" }),
+    new File(["image fixture"], "surat.png", { type: "image/png" }),
+  ]) {
+    await repository.saveInternship(input, id, undefined, file);
+    const meta = (await repository.snapshot()).internships.find(
+      (a) => a.id === id,
+    )!.campusLetter!;
+    assert.equal(
+      await (await repository.getFile(meta.id)).blob.text(),
+      await file.text(),
+    );
+    if (oldId) {
+      await assert.rejects(repository.getFile(oldId));
+      await editStoredState((s) =>
+        assert.ok(!(s.blobs as Record<string, Blob>)[oldId!]),
+      );
+    }
+    oldId = meta.id;
+  }
+  await repository.saveInternship(input, id, undefined, null);
+  assert.equal(
+    (await repository.snapshot()).internships.find((a) => a.id === id)!
+      .campusLetter,
+    undefined,
+  );
+  await editStoredState((s) =>
+    assert.ok(!(s.blobs as Record<string, Blob>)[oldId!]),
+  );
+  await repository.saveInternship(input, id, undefined, sampleFile());
+  const meta = (await repository.snapshot()).internships.find(
+    (a) => a.id === id,
+  )!.campusLetter!;
+  await repository.loginDemo("admin");
+  await repository.deleteInternship(id);
+  await assert.rejects(repository.getFile(meta.id));
+  await editStoredState((s) =>
+    assert.ok(!(s.blobs as Record<string, Blob>)[meta.id]),
+  );
+});
+
+test("invalid campus letters reject the entire write without damaging the saved letter", async () => {
+  await repository.loginDemo("pemohon");
+  const id = await repository.saveInternship(
+    input,
+    undefined,
+    undefined,
+    sampleFile(),
+  );
+  const before = await repository.snapshot();
+  for (const file of [
+    new File([], "empty.pdf", { type: "application/pdf" }),
+    new File(["bad"], "surat.exe", { type: "application/pdf" }),
+    new File(["bad"], "surat.png", { type: "application/pdf" }),
+    new File([new Uint8Array(MAX_FILE_SIZE + 1)], "besar.pdf", {
+      type: "application/pdf",
+    }),
+  ]) {
+    await assert.rejects(
+      repository.saveInternship(
+        { ...input, major: "Tidak boleh tersimpan" },
+        id,
+        undefined,
+        file,
+      ),
+    );
+    await assert.rejects(
+      repository.saveInternship(input, undefined, undefined, file),
+    );
+  }
+  assert.deepEqual(
+    (await repository.snapshot()).internships,
+    before.internships,
+  );
+  const meta = before.internships.find((a) => a.id === id)!.campusLetter!;
+  assert.ok((await repository.getFile(meta.id)).blob.size > 0);
+});
 beforeEach(async () => {
   await repository.resetDemo();
 });

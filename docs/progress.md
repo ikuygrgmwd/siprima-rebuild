@@ -9,6 +9,8 @@
 
 ## Keputusan
 
+- Tambahan lanjutan: unggahan surat pengantar kampus opsional (PDF/JPG/JPEG/PNG, maksimum 5 MiB), penggantian/penghapusan, unduhan pemilik/admin, dan cleanup berkas atomik. Total 17 tes otomatis lulus. Data magang lama tanpa lampiran tetap terbaca.
+
 - npm satu-satunya package manager; lockfile disertakan; tidak ada ORM/backend/secret.
 - IndexedDB menyimpan metadata dan Blob secara atomik. Sesi simulasi; BroadcastChannel/fokus menyegarkan tab lain.
 - Pemohon hanya mengakses data miliknya melalui repository; admin semua data. Otorisasi produksi wajib server.

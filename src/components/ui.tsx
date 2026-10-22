@@ -203,6 +203,7 @@ export function DownloadButton({ id, name }: { id: string; name?: string }) {
   return (
     <span className="download-control">
       <button
+        type="button"
         className="button secondary small"
         disabled={busy}
         onClick={async () => {
