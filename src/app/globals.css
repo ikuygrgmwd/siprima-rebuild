@@ -1,5 +1,431 @@
 @import "tailwindcss";
 
+/* Internship registration and administration */
+.intern-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 26px;
+}
+.intern-stat {
+  padding: 20px 22px;
+}
+.intern-stat > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #5b697a;
+}
+.intern-stat-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.intern-stat-icon.teal {
+  background: #edf8f3;
+  color: #25836e;
+}
+.intern-stat-icon.amber {
+  background: #fff6e9;
+  color: #bd842d;
+}
+.intern-stat-icon.blue {
+  background: #eff5fc;
+  color: #5684b4;
+}
+.intern-stat > strong {
+  display: block;
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -1px;
+  margin: 8px 0 3px;
+  color: #233b3c;
+}
+.intern-stat > small {
+  font-size: 10px;
+  color: #84909e;
+}
+.intern-filter {
+  margin-bottom: 26px;
+}
+.intern-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #edf1f4;
+}
+.intern-section-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #628177;
+}
+.intern-section-heading h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #263f40;
+}
+.intern-section-heading p {
+  font-size: 11px;
+  color: #84909e;
+  margin-top: 4px;
+}
+.intern-section-heading .text-button {
+  font-size: 11px;
+  color: #327c69;
+  cursor: pointer;
+}
+.intern-section-heading button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.intern-filter-count {
+  font-size: 10px;
+  background: #e8f4ed;
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+.intern-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 19px 25px;
+  padding: 22px 24px 25px;
+}
+.intern-filter-grid .field {
+  margin: 0;
+  min-width: 0;
+}
+.intern-filter-grid select {
+  font-size: 12px;
+  background-color: #fff;
+}
+.intern-filter-grid label {
+  font-size: 11px;
+  color: #647383;
+}
+.intern-heading-icon {
+  background: #edf6f1;
+  border-radius: 9px;
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+}
+.intern-toolbar {
+  justify-content: space-between;
+}
+.intern-page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #84909e;
+  font-size: 11px;
+}
+.intern-page-size select {
+  width: 65px;
+}
+.intern-table {
+  min-width: 990px;
+}
+.intern-table th {
+  font-size: 10px;
+  padding: 14px 18px;
+}
+.intern-table td {
+  padding: 20px 18px;
+}
+.intern-table td:first-child {
+  min-width: 265px;
+}
+.intern-table td:nth-child(2) {
+  min-width: 180px;
+}
+.intern-table td:nth-child(4) {
+  max-width: 150px;
+}
+.intern-table strong {
+  color: #3d505e;
+  font-weight: 500;
+}
+.intern-person {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.intern-avatar {
+  height: 35px;
+  width: 35px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #477b6b;
+  background: #edf5ef;
+}
+.intern-avatar.tone-1 {
+  color: #5b7ba3;
+  background: #eef3fa;
+}
+.intern-avatar.tone-2 {
+  color: #9a7a52;
+  background: #faf3e8;
+}
+.intern-person > div > span,
+.intern-person small {
+  display: block;
+  font-size: 10px;
+  color: #82909f;
+  margin-top: 4px;
+}
+.intern-person small {
+  font-size: 9px;
+  color: #98a3af;
+}
+.intern-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #283f45;
+}
+.intern-name:hover {
+  color: #0f766e;
+  text-decoration: underline;
+}
+.intern-cell-sub {
+  display: block;
+  color: #84909e;
+  margin-top: 6px;
+  font-size: 10px;
+}
+.intern-date {
+  white-space: nowrap;
+}
+.intern-muted {
+  color: #98a3af;
+  font-style: italic;
+}
+.badge.blue {
+  background: #edf3fd;
+  color: #507eae;
+}
+.intern-demo-note {
+  font-size: 10px;
+  color: #8996a5;
+  margin: 17px 2px 5px;
+  line-height: 1.7;
+}
+.intern-form {
+  max-width: 1050px;
+}
+.intern-form fieldset {
+  border: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+.intern-form .field:has(textarea) {
+  grid-column: 1 / -1;
+}
+.intern-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.intern-form-footer > p {
+  max-width: 360px;
+  font-size: 11px;
+  color: #82909c;
+  line-height: 1.7;
+}
+.intern-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: #edf6f1;
+  border: 1px solid #dcebe2;
+  padding: 22px 26px;
+  border-radius: 9px;
+  margin-bottom: 24px;
+}
+.intern-status-banner > div {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: #3d7c66;
+}
+.intern-status-banner strong {
+  font-size: 15px;
+  color: #2a5349;
+}
+.intern-status-banner p {
+  margin-top: 5px;
+  font-size: 11px;
+}
+.intern-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.intern-details section,
+.intern-history {
+  padding: 26px;
+  min-width: 0;
+}
+.intern-details h2,
+.intern-history h2 {
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+.intern-details dl > div {
+  margin-bottom: 20px;
+}
+.intern-details dl > div:last-child {
+  margin-bottom: 0;
+}
+.intern-details dt {
+  color: #8995a2;
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+.intern-details dd {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #3e5161;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.intern-history ol {
+  list-style: none;
+  padding: 0;
+}
+.intern-history li {
+  position: relative;
+  display: flex;
+  gap: 20px;
+  padding: 0 0 24px;
+  margin-left: 5px;
+  border-left: 1px solid #e2e8f0;
+}
+.intern-history li:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+.intern-timeline-dot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  background: #5f9b83;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 3px #e5f1eb;
+  border-radius: 50%;
+  margin-left: -5px;
+  margin-top: 8px;
+}
+.intern-history p {
+  font-size: 11px;
+  color: #8b96a4;
+  margin-top: 9px;
+}
+@media (max-width: 1100px) {
+  .intern-overview {
+    gap: 12px;
+  }
+  .intern-stat {
+    padding: 17px;
+  }
+  .intern-stat > div {
+    font-size: 11px;
+  }
+}
+@media (max-width: 800px) {
+  .intern-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .intern-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .intern-overview {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .intern-stat {
+    padding: 14px;
+  }
+  .intern-stat-icon {
+    width: 26px;
+    height: 26px;
+  }
+  .intern-stat-icon svg {
+    width: 15px;
+  }
+  .intern-stat > strong {
+    font-size: 26px;
+  }
+  .intern-stat > small {
+    font-size: 9px;
+  }
+  .intern-stat > div {
+    font-size: 10px;
+  }
+  .intern-filter-grid {
+    gap: 15px;
+    padding: 18px;
+    grid-template-columns: 1fr;
+  }
+  .intern-section-heading {
+    padding: 17px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .intern-section-heading h2 {
+    font-size: 13px;
+  }
+  .intern-heading-icon {
+    display: none;
+  }
+  .intern-toolbar .search-field {
+    width: 100%;
+    max-width: none;
+  }
+  .intern-toolbar .intern-page-size {
+    align-self: flex-end;
+  }
+  .intern-form-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .intern-form-footer .actions {
+    flex-wrap: wrap;
+  }
+  .intern-details {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .intern-details section,
+  .intern-history {
+    padding: 20px;
+  }
+  .intern-status-banner {
+    padding: 20px;
+    flex-wrap: wrap;
+  }
+}
+
 :root {
   --primary: #0f766e;
   --primary-dark: #115e59;

@@ -6,7 +6,7 @@
 | --- | --- |
 | `npm run lint` | Lulus tanpa error/warning |
 | `npm run typecheck` | Lulus |
-| `npm test` | 9/9 lulus, Node test runner + fake-indexeddb |
+| `npm test` | 14/14 lulus, Node test runner + fake-indexeddb (termasuk modul magang) |
 | `npm run build` | Lulus dengan Webpack; enam halaman statis terbangun dan ruang kerja catch-all dinamis |
 | `npm start -- --port 3002` | Berjalan tanpa secret/database; `/`, `/masuk`, `/pengajuan`, `/akun` memberi HTTP 200 |
 | `npm audit --omit=dev` | 0 kerentanan runtime pada waktu pemeriksaan |
@@ -46,7 +46,15 @@ Build Turbopack gagal pada worker PostCSS di Windows ini, baik sandbox maupun pe
 - Registrasi → dashboard kosong; akses langsung ke URL pengajuan Nadia ditolak.
 - Desktop dan layar sempit diperiksa. Lebar CSS 390 px diverifikasi lewat DOM (body/scrollWidth 380 px termasuk ruang scrollbar); tanpa overflow horizontal halaman. Menu ponsel berfungsi; sidebar tertutup disembunyikan dari aksesibilitas.
 
-## Batas
+## Tambahan magang — 22 Oktober 2026
+
+- Total 14 tes otomatis lulus: 9 tes lama + 5 tes magang. Cakupan tambahan: CRUD/persistensi/kode bersamaan/riwayat, isolasi pemilik dan pengaman akun, tanggal dan pembimbing wajib, kombinasi filter/WIB/CSV anti-formula, serta migrasi state v1 tanpa kehilangan aplikasi, sesi, akun, dan byte berkas. Daftar kosong setelah penghapusan tidak diisi ulang otomatis.
+- Browser: form pemohon kosong memunculkan validasi; pendaftaran contoh berhasil dibuat, detail dan refresh tetap menyimpan nilai; admin mengubah status Aktif (ditolak jika pembimbing kosong), mengisi pembimbing/catatan, dan melihat dua entri riwayat.
+- Hapus pendaftaran sementara melalui konfirmasi berhasil; enam pendaftaran sebelumnya tetap ada. Filter Aktif + pencarian Raka menghasilkan satu peserta. Ekspor benar-benar mengunduh CSV dan isi diperiksa (header + satu peserta sesuai filter). Pencarian tanpa hasil menampilkan empty state dan ekspor nonaktif; reset filter dan pagination berfungsi.
+- Responsivitas: desktop 1440 px dan ponsel 390 px diperiksa. Lebar dokumen ponsel 375 px (ruang scrollbar), tabel 990 px di dalam wadah 342 px yang dapat digeser, tanpa overflow horizontal halaman; filter satu kolom dan menu navigasi ponsel bekerja. Override viewport dikembalikan ke normal setelah pengujian.
+- Screenshot hasil: `screenshots/internships-demo.jpg`. Data dan semua identitas pada preview bersifat sintetis.
+
+## Batas verifikasi
 
 - Browser Chromium in-app di Windows; Safari/Firefox, pembaca layar nyata, perangkat fisik belum diuji.
 - Reset sandi penuh, delete akun/pengajuan beserta cascade dan validasi file negatif diuji repository; belum seluruh kombinasinya di browser.

@@ -2,7 +2,7 @@
 
 ## Batas demo
 
-`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 1 pada IndexedDB `siprima-demo-v1`, termasuk Blob; ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration, API produksi, atau filesystem server penyimpan unggahan.
+`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 2 pada IndexedDB `siprima-demo-v1`, termasuk Blob; state lama versi 1 dimigrasi tanpa menghapus data sebelumnya. Ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration database server, API produksi, atau filesystem server penyimpan unggahan.
 
 Saat mengganti adapter dengan HTTP, pertahankan metode dan tipe di `domain.ts`. UI hanya menerima Snapshot yang sudah dibatasi, metadata berkas, dan hasil operasi. Untuk skala produksi, ganti snapshot penuh dengan query list berparameter (search, filter, cursor/page) dan detail per ID; halaman daftar kemudian dapat memanggil query tersebut. State UI dan form tetap dapat dipakai.
 
@@ -36,6 +36,15 @@ Saat mengganti adapter dengan HTTP, pertahankan metode dan tipe di `domain.ts`. 
 Otorisasi client tidak dapat melindungi data dari manipulasi browser. Production wajib memeriksa akses di server, termasuk dokumen, dan menghapus seed/demo bypass. Admin tidak ditentukan oleh ID 1.
 
 ## Migrasi dan keputusan terbuka
+
+### Tambahan modul magang
+
+- `Internship`: identitas peserta (nama/email/telepon/NIM atau NIS/institusi/jurusan/jenjang), program, unit, tanggal mulai/selesai, motivasi, ownerId, kode MAG, status, pembimbing, catatan admin, timestamps. `InternshipStatusHistory`: status, waktu, aktor; server harus memakai ID aktor dan menyimpan audit yang tidak bisa diedit klien.
+- `saveInternship` dan `deleteInternship` melengkapi kontrak repository. Pemohon hanya membaca miliknya, membuat Diajukan, dan mengedit selama Diajukan; pemohon tidak mengubah pembimbing/catatan/status. Admin mengelola seluruh peserta dan menghapus. Hapus akun pemilik dibatasi ketika masih ada magang terkait.
+- Form admin mengizinkan entri manual dengan pemilik akun admin; hubungan ke akun peserta perlu rancangan invitation/claim saat backend, bukan pencocokan otomatis berdasarkan email.
+- Konfirmasi daftar unit/program/jenjang dan aturan transisi status resmi. Preview mengizinkan admin memilih seluruh status; pembimbing wajib ketika Aktif/Selesai. Catatan admin terlihat oleh pemohon, bukan catatan internal rahasia.
+- Query daftar dan ekspor perlu otorisasi/filter server yang sama; tanggal filter pengajuan memakai Asia/Jakarta. CSV menetralkan formula dari nilai pengguna.
+- Belum mencakup absensi, penilaian, sertifikat, dokumen pendaftaran magang terpisah, atau notifikasi email. Status penelitian tetap terpisah dari status magang.
 
 Audit lama menyebut migration inti belum lengkap. Pada fase backend, baca **definisi tabel saja** dari salinan dump sesuai kebutuhan, petakan ID dan hubungan, lalu siapkan migration lengkap serta uji jumlah/relasi/berkas hilang. Jangan impor data pribadi ke preview ini.
 

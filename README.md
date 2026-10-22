@@ -30,7 +30,7 @@ npm start
 3. Buka daftar/detail, cari judul atau kode, gunakan filter dan pagination, lalu edit.
 4. Dari detail pilih **Unggah laporan** → **Pakai laporan contoh** → **Unggah laporan**.
 5. Buka **Unduh laporan**, pilih kode pengajuan, dan unduh berkas. Refresh untuk mengecek persistensi.
-6. Keluar lalu masuk sebagai admin untuk mengelola akun dan master tujuan.
+6. Keluar lalu masuk sebagai admin untuk mengelola akun, master tujuan, dan **Peserta magang** (`/magang`).
 7. **Reset data demo** di sidebar mengembalikan data awal setelah konfirmasi dan mengeluarkan sesi.
 
 Akun contoh (seluruhnya fiktif):
@@ -46,7 +46,10 @@ Registrasi membuat akun pemohon lokal. Reset sandi menampilkan tautan simulasi y
 ## Fitur dan batas
 
 - Pengajuan memuat semua 13 isian termasuk relasi tujuan dari form penelitian lama, lima jenis lampiran opsional, kode REG, dan status awal Review.
-- Tidak ada persetujuan, pembayaran, atau penerbitan surat otomatis. **Unduh laporan** mengambil laporan unggahan, sesuai perilaku menu lama yang salah dilabeli sebagai surat penelitian.
+- Modul **Pendaftaran magang**: pemohon membuat dan mengedit pendaftaran berstatus Diajukan; admin mengelola semua peserta, penempatan, pembimbing, catatan, serta status Diajukan/Diterima/Aktif/Selesai/Ditolak/Mengundurkan diri. Riwayat status tercatat, hanya admin dapat menghapus. Data yang dibuat manual oleh admin terkait akun admin tersebut.
+- Daftar magang memiliki enam filter, pencarian, pagination, ekspor CSV seluruh hasil filter, dan enam peserta sintetis. Jalur `/magang/baru`, `/magang/[id]`, `/magang/[id]/edit` tersedia. Pilihan unit/program adalah contoh, belum master data layanan resmi.
+- Penelitian tetap berstatus Review; belum ada persetujuan penelitian, pembayaran, atau penerbitan surat otomatis. **Unduh laporan** mengambil laporan unggahan, sesuai perilaku menu lama yang salah dilabeli sebagai surat penelitian.
+- State browser versi 1 dimigrasi otomatis ke versi 2 untuk menambahkan magang tanpa menghapus akun, sesi, pengajuan, laporan, atau Blob lama. Nama database tetap sama agar data sebelumnya terbaca.
 - Data dan Blob disimpan dalam IndexedDB, transaksi metadata/berkas atomik, perubahan antar-tab disinkronkan melalui BroadcastChannel/fokus.
 - Semua operasi melewati kontrak async `ResearchRepository`. Repository memfilter dan memeriksa kepemilikan, termasuk unduhan, edit, hapus, dan upload. Ini hanya simulasi, bukan keamanan server.
 - Upload menerima PDF/JPG/PNG maksimum 5 MiB; validasi ekstensi dan MIME. Preview tidak memindai isi/malware. Gunakan dokumen sintetis saja.

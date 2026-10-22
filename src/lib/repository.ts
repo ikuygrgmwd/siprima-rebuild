@@ -8,6 +8,8 @@ import {
   registrationSchema,
   userSchema,
   validateFile,
+  internshipSchema,
+  internshipManagementSchema,
 } from "./domain";
 import type {
   Application,
@@ -21,12 +23,17 @@ import type {
   Snapshot,
   User,
   UserInput,
+  Internship,
+  InternshipInput,
+  InternshipManagement,
 } from "./domain";
 import { sampleInput, samplePdf } from "./sample";
+import { seedInternships } from "./internships";
 
 type StoredUser = User & { passwordDigest: string };
 type State = {
-  version: 1;
+  version: 1 | 2;
+  internships: Internship[];
   users: StoredUser[];
   purposes: Purpose[];
   applications: Application[];
@@ -57,6 +64,12 @@ export interface ResearchRepository {
   saveUser(input: UserInput, password?: string, id?: string): Promise<void>;
   deleteUser(id: string): Promise<void>;
   resetDemo(): Promise<void>;
+  saveInternship(
+    input: InternshipInput,
+    id?: string,
+    management?: InternshipManagement,
+  ): Promise<string>;
+  deleteInternship(id: string): Promise<void>;
 }
 const DB = "siprima-demo-v1";
 async function digest(password: string) {
@@ -135,7 +148,8 @@ async function seed(): Promise<State> {
     attachments: {},
   }));
   return {
-    version: 1,
+    version: 2,
+    internships: seedInternships(),
     users,
     purposes: [
       { id: "purpose-1", name: "Skripsi / tugas akhir" },
@@ -190,12 +204,19 @@ async function transaction<T>(
     req.onsuccess = () => {
       try {
         const state: State = req.result ?? initial;
-        if (state.version !== 1)
+        if (state.version !== 1 && state.version !== 2)
           throw new Error(
             "Versi data demo tidak dikenali. Reset data demo untuk melanjutkan.",
           );
+        const migrated = state.version === 1;
+        if (migrated) {
+          state.internships = seedInternships().filter((a) =>
+            state.users.some((u) => u.id === a.ownerId),
+          );
+          state.version = 2;
+        }
         value = action(state);
-        if (write || !req.result) store.put(state, "current");
+        if (write || !req.result || migrated) store.put(state, "current");
       } catch (error) {
         failure = error;
         tx.abort();
@@ -268,6 +289,11 @@ export const repository: ResearchRepository = {
         users: user?.role === "admin" ? s.users.map(publicUser) : [],
         purposes: user ? s.purposes : [],
         applications,
+        internships: user
+          ? s.internships
+              .filter((a) => user.role === "admin" || a.ownerId === user.id)
+              .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+          : [],
         reports: s.reports.filter((r) =>
           applications.some((a) => a.id === r.applicationId),
         ),
@@ -484,13 +510,68 @@ export const repository: ResearchRepository = {
     transaction((s) => {
       const u = admin(s);
       if (u.id === id) throw new Error("Tidak dapat menghapus akun sendiri.");
-      if (s.applications.some((a) => a.ownerId === id))
+      if (
+        s.applications.some((a) => a.ownerId === id) ||
+        s.internships.some((a) => a.ownerId === id)
+      )
         throw new Error(
-          "Akun masih memiliki pengajuan. Nonaktifkan akun atau hapus pengajuannya terlebih dahulu.",
+          "Akun masih memiliki pengajuan penelitian atau magang. Nonaktifkan akun atau hapus pengajuannya terlebih dahulu.",
         );
       s.users = s.users.filter((u) => u.id !== id);
       for (const [token, reset] of Object.entries(s.resets))
         if (reset.userId === id) delete s.resets[token];
+    }, true),
+  saveInternship: async (input, id, management) => {
+    const fields = internshipSchema.parse(input);
+    const controls = management
+      ? internshipManagementSchema.parse(management)
+      : undefined;
+    return transaction((s) => {
+      const u = actor(s);
+      if (controls && u.role !== "admin")
+        throw new Error("Status dan pembimbing hanya dapat diatur admin.");
+      const previous = id ? s.internships.find((a) => a.id === id) : undefined;
+      if (
+        id &&
+        (!previous || (u.role !== "admin" && previous.ownerId !== u.id))
+      )
+        throw new Error(
+          "Pendaftaran tidak ditemukan atau tidak dapat diakses.",
+        );
+      if (previous && u.role !== "admin" && previous.status !== "Diajukan")
+        throw new Error(
+          "Pendaftaran sudah diproses. Hubungi admin untuk perubahan.",
+        );
+      const now = new Date().toISOString();
+      const record: Internship = previous ?? {
+        ...fields,
+        id: crypto.randomUUID(),
+        ownerId: u.id,
+        code: nextCode(
+          s.internships.map((a) => ({ code: a.code.replace(/^MAG/, "REG") })),
+          jakartaDay(),
+        ).replace(/^REG/, "MAG"),
+        status: "Diajukan",
+        mentor: "",
+        note: "",
+        createdAt: now,
+        updatedAt: now,
+        history: [],
+      };
+      const nextStatus = controls?.status ?? record.status;
+      if (!previous || nextStatus !== previous.status)
+        record.history.push({ status: nextStatus, at: now, by: u.name });
+      Object.assign(record, fields, controls, { updatedAt: now });
+      if (!previous) s.internships.push(record);
+      return record.id;
+    }, true);
+  },
+  deleteInternship: (id) =>
+    transaction((s) => {
+      admin(s);
+      if (!s.internships.some((a) => a.id === id))
+        throw new Error("Pendaftaran tidak ditemukan.");
+      s.internships = s.internships.filter((a) => a.id !== id);
     }, true),
   resetDemo: async () => {
     const fresh = await seed();

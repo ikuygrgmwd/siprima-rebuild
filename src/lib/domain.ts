@@ -93,7 +93,78 @@ export type Snapshot = {
   purposes: Purpose[];
   applications: Application[];
   reports: Report[];
+  internships: Internship[];
 };
+export const internshipStatuses = [
+  "Diajukan",
+  "Diterima",
+  "Aktif",
+  "Selesai",
+  "Ditolak",
+  "Mengundurkan diri",
+] as const;
+export const internshipUnits = [
+  "Perencanaan & evaluasi",
+  "Data & inovasi",
+  "Administrasi & pelayanan",
+] as const;
+export const internshipPrograms = [
+  "Magang riset",
+  "Praktik kerja lapangan",
+  "Magang mandiri",
+] as const;
+export const internshipLevels = ["SMA / SMK", "D3", "D4 / S1", "S2"] as const;
+export const internshipSchema = z
+  .object({
+    applicantName: text,
+    email: emailSchema,
+    phone: phoneSchema,
+    institution: text,
+    studentNumber: text,
+    major: text,
+    level: z.enum(internshipLevels),
+    program: z.enum(internshipPrograms),
+    unit: z.enum(internshipUnits),
+    startDate: date,
+    endDate: date,
+    motivation: z
+      .string()
+      .trim()
+      .min(1, "Wajib diisi.")
+      .max(2000, "Maksimum 2.000 karakter."),
+  })
+  .refine((v) => v.endDate >= v.startDate, {
+    path: ["endDate"],
+    message: "Tanggal selesai harus sama atau setelah tanggal mulai.",
+  });
+export const internshipManagementSchema = z
+  .object({
+    status: z.enum(internshipStatuses),
+    mentor: z.string().trim().max(150, "Maksimum 150 karakter."),
+    note: z.string().trim().max(2000, "Maksimum 2.000 karakter."),
+  })
+  .refine(
+    (v) => !["Aktif", "Selesai"].includes(v.status) || v.mentor.length > 0,
+    {
+      path: ["mentor"],
+      message: "Isi pembimbing untuk peserta aktif atau selesai.",
+    },
+  );
+export type InternshipInput = z.infer<typeof internshipSchema>;
+export type InternshipManagement = z.infer<typeof internshipManagementSchema>;
+export type Internship = InternshipInput &
+  InternshipManagement & {
+    id: string;
+    code: string;
+    ownerId: string;
+    createdAt: string;
+    updatedAt: string;
+    history: {
+      status: InternshipManagement["status"];
+      at: string;
+      by: string;
+    }[];
+  };
 export type AttachmentChanges = Partial<Record<AttachmentKind, File | null>>;
 export const userSchema = z.object({
   name: text,

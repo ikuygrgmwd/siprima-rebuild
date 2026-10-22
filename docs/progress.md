@@ -5,6 +5,7 @@
 1. **Fondasi dan alur pengajuan:** Next.js App Router/TypeScript, Tailwind, React Hook Form/Zod, layout responsif, repository IndexedDB, form lengkap, detail/edit/delete, lima jenis lampiran.
 2. **Fitur utama lain:** landing, akun demo/register/reset/logout, dashboard per peran, CRUD akun admin, master tujuan, laporan, unduhan berdasarkan kode, pencarian/filter/pagination, reset demo.
 3. **Verifikasi dan dokumentasi:** build produksi, lint, typecheck, sembilan pengujian repository lulus; alur browser inti, upload via file picker, refresh, download PDF, isolasi pemilik, dan administrasi diuji. README, inventaris, kontrak backend, hasil verifikasi tersedia.
+4. **Pendaftaran & pengelolaan magang:** modul `/magang` sesuai permintaan lanjutan pengguna. Form pemohon/admin, daftar dengan enam filter/pencarian/pagination/CSV, detail, edit, status, pembimbing, catatan, riwayat, dan konfirmasi hapus. Migrasi state versi 1 ke 2 menjaga data penelitian dan berkas. Total 14 pengujian otomatis; alur browser dan responsivitas terverifikasi. Pengguna meminta modul ini diteruskan ke GitHub dan integrasi Vercel yang sudah terhubung.
 
 ## Keputusan
 
@@ -19,6 +20,8 @@
 ## Preview
 
 `npm run dev` melayani http://127.0.0.1:3000. Origin ini menyimpan perubahan sintetis hasil uji browser, termasuk “Uji browser — judul diperbarui”. Reset data demo tersedia untuk mengembalikan seed.
+
+Preview magang: http://127.0.0.1:3000/magang, akun demo Admin. Data pendaftaran sementara untuk uji browser telah dihapus, sedangkan data penelitian lama dipertahankan. Unit/program/pembimbing adalah contoh; backend bersama belum tersedia.
 
 ## Berikutnya jika diminta
 

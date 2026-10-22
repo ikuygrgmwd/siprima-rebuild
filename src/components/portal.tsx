@@ -9,6 +9,7 @@ import {
   Download,
   FileText,
   FolderOpen,
+  GraduationCap,
   Home,
   LayoutDashboard,
   LogOut,
@@ -32,10 +33,16 @@ import {
 import { Reports } from "./reports";
 import { Accounts, Purposes } from "./administration";
 import { PageHeading } from "./page-heading";
+import {
+  InternshipList,
+  InternshipForm,
+  InternshipDetail,
+} from "./internships";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/pengajuan", label: "Pengajuan penelitian", icon: FileText },
+  { href: "/magang", label: "Pendaftaran magang", icon: GraduationCap },
   { href: "/laporan", label: "Laporan penelitian", icon: FolderOpen },
   { href: "/unduhan", label: "Unduh laporan", icon: Download },
 ];
@@ -91,6 +98,12 @@ export function Portal() {
   if (path === "/dashboard") content = <Dashboard />;
   else if (path === "/pengajuan") content = <ApplicationList />;
   else if (path === "/pengajuan/baru") content = <ApplicationForm />;
+  else if (path === "/magang") content = <InternshipList />;
+  else if (path === "/magang/baru") content = <InternshipForm />;
+  else if (parts[0] === "magang" && parts.length === 3 && parts[2] === "edit")
+    content = <InternshipForm id={parts[1]} />;
+  else if (parts[0] === "magang" && parts.length === 2)
+    content = <InternshipDetail id={parts[1]} />;
   else if (
     parts[0] === "pengajuan" &&
     parts.length === 3 &&
@@ -158,7 +171,7 @@ export function Portal() {
               onClick={() => setMenu(false)}
             >
               <Icon size={19} />
-              {label}
+              {href === "/magang" && isAdmin ? "Peserta magang" : label}
               {href === "/pengajuan" && (
                 <span className="nav-count">{data.applications.length}</span>
               )}
@@ -214,7 +227,9 @@ export function Portal() {
             </button>
             <Home size={16} />
             <ChevronRight size={14} />
-            <span>{title}</span>
+            <span>
+              {parts[0] === "magang" && isAdmin ? "Peserta magang" : title}
+            </span>
           </div>
           <div className="topbar-right">
             <span className="demo-pill">
