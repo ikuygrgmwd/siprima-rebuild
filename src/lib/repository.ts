@@ -13,6 +13,7 @@ import {
   internshipAttachmentKinds,
   newsSchema,
   profileSchema,
+  masterSchema,
 } from "./domain";
 import type {
   Application,
@@ -33,14 +34,18 @@ import type {
   News,
   NewsInput,
   ProfileInput,
+  MasterData,
+  MasterKind,
+  MasterInput,
 } from "./domain";
 import { sampleInput, samplePdf } from "./sample";
 import { seedInternships } from "./internships";
 import { seedNews } from "./news";
+import { seedMasters, masterApplicationFields } from "./masters";
 
 type StoredUser = User & { passwordDigest: string };
-type State = {
-  version: 1 | 2 | 3 | 4;
+type State = MasterData & {
+  version: 1 | 2 | 3 | 4 | 5;
   news: News[];
   internships: Internship[];
   users: StoredUser[];
@@ -70,6 +75,8 @@ export interface ResearchRepository {
   getFile(id: string): Promise<{ meta: FileMeta; blob: Blob }>;
   savePurpose(name: string, id?: string): Promise<void>;
   deletePurpose(id: string): Promise<void>;
+  saveMaster(kind: MasterKind, input: MasterInput, id?: string): Promise<void>;
+  deleteMaster(kind: MasterKind, id: string): Promise<void>;
   saveUser(input: UserInput, password?: string, id?: string): Promise<void>;
   deleteUser(id: string): Promise<void>;
   saveNews(input: NewsInput, id?: string): Promise<void>;
@@ -162,7 +169,8 @@ async function seed(): Promise<State> {
     attachments: {},
   }));
   return {
-    version: 4,
+    version: 5,
+    ...seedMasters(),
     news: seedNews(),
     internships: seedInternships(),
     users,
@@ -219,11 +227,11 @@ async function transaction<T>(
     req.onsuccess = () => {
       try {
         const state: State = req.result ?? initial;
-        if (![1, 2, 3, 4].includes(state.version))
+        if (![1, 2, 3, 4, 5].includes(state.version))
           throw new Error(
             "Versi data demo tidak dikenali. Reset data demo untuk melanjutkan.",
           );
-        const migrated = state.version !== 4;
+        const migrated = state.version !== 5;
         if (state.version === 1) {
           state.internships = seedInternships().filter((a) =>
             state.users.some((u) => u.id === a.ownerId),
@@ -242,6 +250,10 @@ async function transaction<T>(
         if (state.version === 3) {
           state.news = seedNews();
           state.version = 4;
+        }
+        if (state.version === 4) {
+          Object.assign(state, seedMasters());
+          state.version = 5;
         }
         value = action(state);
         if (write || !req.result || migrated) store.put(state, "current");
@@ -304,6 +316,41 @@ function removeReport(s: State, r: Report) {
   s.reports = s.reports.filter((v) => v.id !== r.id);
 }
 export const repository: ResearchRepository = {
+  saveMaster: (kind, input, id) =>
+    transaction((s) => {
+      admin(s);
+      const parsed = masterSchema.parse(input);
+      const data = {
+        name: parsed.name,
+        ...(kind === "villages" ? { districtId: parsed.districtId } : {}),
+      };
+      const item = id ? s[kind].find((record) => record.id === id) : undefined;
+      if (id && !item) throw new Error("Data master tidak ditemukan.");
+      if (kind === "villages") {
+        if (!s.districts.some((d) => d.id === data.districtId))
+          throw new Error("Pilih kecamatan yang tersedia.");
+        if (item && item.districtId !== data.districtId &&
+            s.applications.some((a) => a.villageId === item.id))
+          throw new Error("Kelurahan masih digunakan oleh pengajuan; kecamatannya tidak dapat dipindah.");
+      }
+      if (s[kind].some((record) => record.id !== id &&
+          record.name.toLocaleLowerCase("id-ID") === data.name.toLocaleLowerCase("id-ID") &&
+          (kind !== "villages" || record.districtId === data.districtId)))
+        throw new Error("Nama sudah tersedia pada master ini.");
+      if (item) Object.assign(item, data);
+      else s[kind].push({ ...data, id: crypto.randomUUID() });
+    }, true),
+  deleteMaster: (kind, id) =>
+    transaction((s) => {
+      admin(s);
+      if (!s[kind].some((record) => record.id === id))
+        throw new Error("Data master tidak ditemukan.");
+      if (s.applications.some((a) => a[masterApplicationFields[kind]] === id))
+        throw new Error("Data masih digunakan oleh pengajuan dan tidak dapat dihapus.");
+      if (kind === "districts" && s.villages.some((v) => v.districtId === id))
+        throw new Error("Kecamatan masih memiliki kelurahan dan tidak dapat dihapus.");
+      s[kind] = s[kind].filter((record) => record.id !== id);
+    }, true),
   saveNews: (input, id) =>
     transaction((s) => {
       admin(s);
@@ -374,6 +421,9 @@ export const repository: ResearchRepository = {
           : [],
         users: user?.role === "admin" ? s.users.map(publicUser) : [],
         purposes: user ? s.purposes : [],
+        opds: user ? s.opds : [],
+        districts: user ? s.districts : [],
+        villages: user ? s.villages : [],
         applications,
         internships: user
           ? s.internships
@@ -466,6 +516,13 @@ export const repository: ResearchRepository = {
       const u = actor(s);
       if (!s.purposes.some((p) => p.id === data.purposeId))
         throw new Error("Tujuan penelitian tidak tersedia.");
+      if (data.opdId && !s.opds.some((o) => o.id === data.opdId))
+        throw new Error("OPD tujuan tidak tersedia. Pilih kembali OPD.");
+      if (data.districtId && !s.districts.some((d) => d.id === data.districtId))
+        throw new Error("Kecamatan tidak tersedia. Pilih kembali kecamatan.");
+      if (data.villageId && !s.villages.some((v) =>
+          v.id === data.villageId && v.districtId === data.districtId))
+        throw new Error("Kelurahan tidak tersedia pada kecamatan yang dipilih.");
       const now = new Date().toISOString();
       const a = id
         ? owned(s, id)

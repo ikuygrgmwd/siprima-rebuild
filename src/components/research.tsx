@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
@@ -197,7 +197,7 @@ export function ApplicationList() {
   );
 }
 const fields: {
-  key: keyof ApplicationInput;
+  key: Exclude<keyof ApplicationInput, "opdId" | "districtId" | "villageId">;
   label: string;
   type?: string;
   section: number;
@@ -221,7 +221,7 @@ const fields: {
   { key: "title", label: "Judul penelitian", section: 2 },
   { key: "institution", label: "Lembaga / perguruan tinggi", section: 2 },
   { key: "supervisor", label: "Penanggung jawab", section: 2 },
-  { key: "location", label: "Lokasi penelitian", section: 2 },
+  { key: "location", label: "Detail lokasi penelitian", section: 2 },
   { key: "startDate", label: "Tanggal mulai", type: "date", section: 2 },
   { key: "endDate", label: "Tanggal selesai", type: "date", section: 2 },
   { key: "letterNumber", label: "Nomor surat pengantar", section: 3 },
@@ -256,17 +256,21 @@ function ApplicationEditor({ existing }: { existing?: Application }) {
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ApplicationInput>({
     resolver: zodResolver(applicationSchema),
-    defaultValues: existing ?? {
+    defaultValues: { opdId: "", districtId: "", villageId: "", ...(existing ?? {
       applicantName: data!.user!.name,
       email: data!.user!.email,
       phone: data!.user!.phone,
       address: data!.user!.address,
       purposeId: "",
-    },
+    }) },
   });
+  const districtId = useWatch({ control, name: "districtId" });
+  const villages = data!.villages.filter((v) => v.districtId === districtId);
   function selectFile(kind: AttachmentKind, file: File) {
     const error = validateFile(file);
     setFileErrors((previous) => ({ ...previous, [kind]: error ?? "" }));
@@ -297,6 +301,9 @@ function ApplicationEditor({ existing }: { existing?: Application }) {
             reset({
               ...sampleInput,
               purposeId: data!.purposes[0]?.id ?? "",
+              opdId: "",
+              districtId: "",
+              villageId: "",
               applicantName: data!.user!.name,
               email: data!.user!.email,
             });
@@ -358,6 +365,7 @@ function ApplicationEditor({ existing }: { existing?: Application }) {
                 </div>
                 <div className="form-grid">
                   {n === 2 && (
+                    <>
                     <Field
                       id="purposeId"
                       label="Tujuan penelitian"
@@ -377,6 +385,30 @@ function ApplicationEditor({ existing }: { existing?: Application }) {
                         ))}
                       </select>
                     </Field>
+                    <Field id="opdId" label="OPD tujuan penelitian" error={errors.opdId?.message}
+                      hint={data!.opds.length ? "Opsional, pilih jika penelitian ditujukan ke OPD tertentu." : "Belum ada OPD. Admin dapat menambahkan melalui Master OPD."}>
+                      <select id="opdId" {...register("opdId")}>
+                        <option value="">Tanpa OPD tujuan</option>
+                        {data!.opds.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                      </select>
+                    </Field>
+                    <Field id="districtId" label="Kecamatan lokasi penelitian" error={errors.districtId?.message}
+                      hint={data!.districts.length ? "Opsional, sesuai lokasi kegiatan penelitian." : "Belum ada kecamatan. Hubungi admin untuk menambahkan data."}>
+                      <select id="districtId" aria-invalid={!!errors.districtId} {...register("districtId", {
+                        onChange: () => setValue("villageId", "", { shouldDirty: true, shouldValidate: true }),
+                      })}>
+                        <option value="">Pilih kecamatan (opsional)</option>
+                        {data!.districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                    </Field>
+                    <Field id="villageId" label="Kelurahan lokasi penelitian" error={errors.villageId?.message}
+                      hint={!districtId ? "Pilih kecamatan terlebih dahulu." : villages.length ? "Pilihan mengikuti kecamatan yang dipilih." : "Belum ada kelurahan untuk kecamatan ini."}>
+                      <select id="villageId" disabled={!districtId || !villages.length} {...register("villageId")}>
+                        <option value="">Pilih kelurahan (opsional)</option>
+                        {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                      </select>
+                    </Field>
+                    </>
                   )}
                   {fields
                     .filter((f) => f.section === n)
@@ -607,6 +639,11 @@ export function ApplicationDetail({ id }: { id: string }) {
           <section className="card detail-section" key={group.title}>
             <h2>{group.title}</h2>
             <dl>
+              {group.title === "Rencana penelitian" && [
+                ["OPD tujuan penelitian", data!.opds.find((o) => o.id === a.opdId)?.name],
+                ["Kecamatan lokasi penelitian", data!.districts.find((d) => d.id === a.districtId)?.name],
+                ["Kelurahan lokasi penelitian", data!.villages.find((v) => v.id === a.villageId)?.name],
+              ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "Tidak diisi"}</dd></div>)}
               {group.keys.map((key) => {
                 const field = fields.find((f) => f.key === key)!;
                 return (

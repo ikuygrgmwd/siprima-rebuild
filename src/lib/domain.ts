@@ -11,6 +11,15 @@ export type User = {
   active: boolean;
 };
 export type Purpose = { id: string; name: string };
+export const masterKinds = ["opds", "districts", "villages"] as const;
+export type MasterKind = (typeof masterKinds)[number];
+export const masterSchema = z.object({
+  name: z.string().trim().min(1, "Nama wajib diisi.").max(150, "Maksimum 150 karakter."),
+  districtId: z.string().trim().max(150).optional(),
+});
+export type MasterInput = z.infer<typeof masterSchema>;
+export type MasterRecord = MasterInput & { id: string };
+export type MasterData = Record<MasterKind, MasterRecord[]>;
 const text = z
   .string()
   .trim()
@@ -45,6 +54,9 @@ export const applicationSchema = z
     supervisor: text,
     institution: text,
     location: text,
+    opdId: z.string().trim().max(150).optional(),
+    districtId: z.string().trim().max(150).optional(),
+    villageId: z.string().trim().max(150).optional(),
     startDate: date,
     endDate: date,
     letterNumber: text,
@@ -53,6 +65,10 @@ export const applicationSchema = z
   .refine((v) => v.endDate >= v.startDate, {
     path: ["endDate"],
     message: "Tanggal selesai harus sama atau setelah tanggal mulai.",
+  })
+  .refine((v) => !v.villageId || !!v.districtId, {
+    path: ["districtId"],
+    message: "Pilih kecamatan sebelum memilih kelurahan.",
   });
 export type ApplicationInput = z.infer<typeof applicationSchema>;
 export const attachmentKinds = [
@@ -87,7 +103,7 @@ export type Report = {
   createdAt: string;
   file: FileMeta;
 };
-export type Snapshot = {
+export type Snapshot = MasterData & {
   user: User | null;
   users: User[];
   purposes: Purpose[];

@@ -19,6 +19,9 @@ import {
   RotateCcw,
   Target,
   Users,
+  Building2,
+  MapPin,
+  Map,
   X,
 } from "lucide-react";
 import { useDemo } from "./demo-provider";
@@ -36,6 +39,8 @@ import { Accounts, Purposes } from "./administration";
 import { PageHeading } from "./page-heading";
 import { NewsCarousel, NewsMaster, NewsDetail } from "./news";
 import { AccountSettings } from "./account-settings";
+import { MasterData } from "./master-data";
+import type { MasterKind } from "@/lib/domain";
 import {
   InternshipList,
   InternshipForm,
@@ -48,6 +53,11 @@ const navigation = [
   { href: "/magang", label: "Pendaftaran magang", icon: GraduationCap },
   { href: "/laporan", label: "Laporan penelitian", icon: FolderOpen },
   { href: "/unduhan", label: "Unduh laporan", icon: Download },
+];
+const masterNavigation: { href: string; label: string; kind: MasterKind; icon: typeof Building2 }[] = [
+  { href: "/master/opd", label: "Master OPD", kind: "opds", icon: Building2 },
+  { href: "/master/kecamatan", label: "Master kecamatan", kind: "districts", icon: MapPin },
+  { href: "/master/kelurahan", label: "Master kelurahan", kind: "villages", icon: Map },
 ];
 export function Portal() {
   const path = usePathname();
@@ -93,6 +103,7 @@ export function Portal() {
   const title =
     [
       ...navigation,
+      ...masterNavigation,
       { href: "/akun", label: "Pengelolaan akun" },
       { href: "/tujuan", label: "Tujuan penelitian" },
       { href: "/carousel", label: "Master carousel" },
@@ -100,8 +111,12 @@ export function Portal() {
       { href: "/berita", label: "Berita SIPRIMA" },
     ].find((n) => path.startsWith(n.href))?.label ?? "Halaman";
   const parts = path.split("/").filter(Boolean);
+  const masterPage = masterNavigation.find((item) => item.href === path);
   let content: React.ReactNode;
   if (path === "/dashboard") content = <Dashboard />;
+  else if (masterPage) content = isAdmin
+    ? <MasterData key={masterPage.kind} kind={masterPage.kind} />
+    : <Empty title="Akses khusus admin" description="Hanya admin yang dapat mengelola data master." />;
   else if (path === "/pengaturan-akun") content = <AccountSettings />;
   else if (parts[0] === "berita" && parts.length === 2)
     content = <NewsDetail id={parts[1]} />;
@@ -222,6 +237,12 @@ export function Portal() {
                 <Target size={19} />
                 Tujuan penelitian
               </Link>
+              {masterNavigation.map(({ href, label, icon: Icon }) => (
+                <Link key={href} href={href} aria-current={path === href ? "page" : undefined}
+                  className={path === href ? "active" : ""} onClick={() => setMenu(false)}>
+                  <Icon size={19} /> {label}
+                </Link>
+              ))}
             </>
           )}
           <div className="nav-section">AKUN SAYA</div>

@@ -79,6 +79,14 @@ Build Turbopack gagal pada worker PostCSS di Windows ini, baik sandbox maupun pe
 - JPG sintetis dipilih melalui file picker asli dan pratinjau gambar berhasil dimuat. Build Webpack (termasuk TypeScript), lint, dan 19 tes lulus setelah pembaruan. Build perlu izin filesystem normal karena sandbox Windows menolak pembuatan salah satu folder output; build di luar sandbox berhasil.
 - Pada viewport CSS 390 px, ketujuh kartu tersusun satu kolom, lebar dokumen 375 px, tanpa overflow horizontal halaman. Override viewport dikembalikan. Screenshot: `screenshots/internship-files-demo.jpg` dan `screenshots/internship-documents-demo.jpg`.
 
+### Master OPD dan wilayah — 28 Oktober 2026
+
+- `npm run lint`, `npm run typecheck`, dan seluruh 29 tes lulus. Enam tes master baru memeriksa hak akses, CRUD/persistensi, duplikat, relasi kecamatan-kelurahan, larangan hapus/pindah data terpakai, referensi tidak valid, kompatibilitas kolom opsional, migrasi v4 tanpa kehilangan data/byte berkas, dan daftar kosong yang tidak diisi ulang.
+- `npm run build` (Webpack) berhasil. Percobaan sandbox gagal membuat `.next/static/chunks/app` karena EPERM Windows; pengulangan dengan izin filesystem normal selesai dengan exit code 0.
+- Browser lokal: admin mengedit nama kecamatan, menambahkan kelurahan terkait, dan menemukan perubahan pada dropdown penelitian. Mengganti kecamatan mengosongkan kelurahan dan membatasi opsinya ke kecamatan baru. Pengajuan tersimpan dan detail setelah reload menampilkan OPD/kecamatan/kelurahan yang dipilih. Perubahan nama OPD setelah pengajuan dibuat juga muncul pada detail, sedangkan ID pilihan tetap tersimpan saat edit.
+- Pada viewport 390 px, form tersusun satu kolom; clientWidth dan scrollWidth dokumen sama-sama 375 px (termasuk ruang scrollbar), tanpa overflow horizontal halaman. Viewport dikembalikan setelah pemeriksaan.
+- Data master awal dan data pengujian sintetis. Penyimpanan/otorisasi masih simulasi browser; tidak menguji backend produksi atau daftar wilayah resmi.
+
 ### Cakupan lingkungan terakhir
 
 - Browser Chromium in-app di Windows; Safari/Firefox, pembaca layar nyata, perangkat fisik belum diuji.

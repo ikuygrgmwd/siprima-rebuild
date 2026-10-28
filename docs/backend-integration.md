@@ -2,7 +2,9 @@
 
 ## Batas demo
 
-`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 4 pada IndexedDB `siprima-demo-v1`, termasuk Blob; state lama versi 1/2/3 dimigrasi tanpa menghapus data sebelumnya. Ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration database server, API produksi, atau filesystem server penyimpan unggahan.
+`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 5 pada IndexedDB `siprima-demo-v1`, termasuk Blob; state lama versi 1/2/3/4 dimigrasi tanpa menghapus data sebelumnya. Ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration database server, API produksi, atau filesystem server penyimpan unggahan.
+
+Master OPD/kecamatan/kelurahan menggunakan `saveMaster` dan `deleteMaster` khusus admin. Snapshot pengguna masuk menyertakan `opds`, `districts`, dan `villages`; kelurahan memiliki `districtId`. Penelitian menyimpan `opdId`, `districtId`, dan `villageId` opsional, sementara `location` tetap detail lokasi teks wajib. Adapter server harus memeriksa FK, kecocokan pasangan kecamatan-kelurahan, duplikat nama (kelurahan dalam kecamatan yang sama), dan larangan hapus master terpakai/pindah kecamatan pada kelurahan terpakai secara atomik. Nama dibaca dari master, sehingga koreksi nama tercermin pada detail pengajuan lama. Migrasi tidak menebak wilayah dari teks lokasi lama. Seed saat ini sintetis, bukan daftar resmi Kota Bekasi.
 
 Carousel menambahkan `News` (judul, kategori, ringkasan, isi teks, tema, urutan, active, timestamps). Endpoint berita harus membatasi mutasi pada admin dan tidak mengirim draf kepada pemohon. `updateProfile` hanya menerima nama/email/telepon/alamat dan menentukan pemilik dari sesi; `changePassword` memerlukan sandi lama dan membatalkan token reset. Adapter produksi perlu reautentikasi, hashing/auth yang sesuai, verifikasi perubahan email, serta kebijakan invalidasi sesi server.
 
