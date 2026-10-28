@@ -45,6 +45,9 @@ Registrasi membuat akun pemohon lokal. Reset sandi menampilkan tautan simulasi y
 
 ## Fitur dan batas
 
+- Dashboard memiliki carousel berita dengan tombol sebelumnya/berikutnya, penghitung slide, dan halaman baca berita. Tiga berita dummy disediakan saat instalasi atau migrasi pertama. Admin mengelola judul, kategori, ringkasan, isi, warna, urutan, serta status tayang/draf melalui **Master carousel** (`/carousel`), termasuk pencarian, pagination, dan hapus dengan konfirmasi. Draf tidak tersedia pada snapshot pemohon.
+- **Pengaturan akun** (`/pengaturan-akun`) tersedia di sidebar admin maupun pemohon, dengan bagian Profil saya dan Kata sandi. Perubahan profil tidak mengubah data pengajuan lama; perubahan sandi memerlukan sandi saat ini dan membatalkan token reset lama. Role/status akun tetap dikelola melalui menu administrasi.
+- State versi 4 menambahkan berita tanpa menghapus akun, sesi, pengajuan, magang, dan berkas versi sebelumnya. Berita serta pengaturan akun tetap tersimpan di browser; belum tersambung ke database server.
 - Pengajuan memuat semua 13 isian termasuk relasi tujuan dari form penelitian lama, lima jenis lampiran opsional, kode REG, dan status awal Review.
 - Modul **Pendaftaran magang**: pemohon membuat dan mengedit pendaftaran berstatus Diajukan; admin mengelola semua peserta, penempatan, pembimbing, catatan, serta status Diajukan/Diterima/Aktif/Selesai/Ditolak/Mengundurkan diri. Riwayat status tercatat, hanya admin dapat menghapus. Data yang dibuat manual oleh admin terkait akun admin tersebut.
 - Daftar magang memiliki enam filter, pencarian, pagination, ekspor CSV seluruh hasil filter, dan enam peserta sintetis. Jalur `/magang/baru`, `/magang/[id]`, `/magang/[id]/edit` tersedia. Pilihan unit/program adalah contoh, belum master data layanan resmi.

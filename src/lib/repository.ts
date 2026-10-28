@@ -11,6 +11,8 @@ import {
   internshipSchema,
   internshipManagementSchema,
   internshipAttachmentKinds,
+  newsSchema,
+  profileSchema,
 } from "./domain";
 import type {
   Application,
@@ -28,13 +30,18 @@ import type {
   InternshipInput,
   InternshipManagement,
   InternshipAttachmentChanges,
+  News,
+  NewsInput,
+  ProfileInput,
 } from "./domain";
 import { sampleInput, samplePdf } from "./sample";
 import { seedInternships } from "./internships";
+import { seedNews } from "./news";
 
 type StoredUser = User & { passwordDigest: string };
 type State = {
-  version: 1 | 2 | 3;
+  version: 1 | 2 | 3 | 4;
+  news: News[];
   internships: Internship[];
   users: StoredUser[];
   purposes: Purpose[];
@@ -65,6 +72,10 @@ export interface ResearchRepository {
   deletePurpose(id: string): Promise<void>;
   saveUser(input: UserInput, password?: string, id?: string): Promise<void>;
   deleteUser(id: string): Promise<void>;
+  saveNews(input: NewsInput, id?: string): Promise<void>;
+  deleteNews(id: string): Promise<void>;
+  updateProfile(input: ProfileInput): Promise<void>;
+  changePassword(current: string, next: string): Promise<void>;
   resetDemo(): Promise<void>;
   saveInternship(
     input: InternshipInput,
@@ -151,7 +162,8 @@ async function seed(): Promise<State> {
     attachments: {},
   }));
   return {
-    version: 3,
+    version: 4,
+    news: seedNews(),
     internships: seedInternships(),
     users,
     purposes: [
@@ -207,17 +219,17 @@ async function transaction<T>(
     req.onsuccess = () => {
       try {
         const state: State = req.result ?? initial;
-        if (![1, 2, 3].includes(state.version))
+        if (![1, 2, 3, 4].includes(state.version))
           throw new Error(
             "Versi data demo tidak dikenali. Reset data demo untuk melanjutkan.",
           );
-        const migrated = state.version !== 3;
+        const migrated = state.version !== 4;
         if (state.version === 1) {
           state.internships = seedInternships().filter((a) =>
             state.users.some((u) => u.id === a.ownerId),
           );
         }
-        if (migrated) {
+        if (state.version < 3) {
           for (const item of state.internships) {
             const legacy = item as Internship & { campusLetter?: FileMeta };
             item.attachments ??= {};
@@ -226,6 +238,10 @@ async function transaction<T>(
             delete legacy.campusLetter;
           }
           state.version = 3;
+        }
+        if (state.version === 3) {
+          state.news = seedNews();
+          state.version = 4;
         }
         value = action(state);
         if (write || !req.result || migrated) store.put(state, "current");
@@ -288,6 +304,54 @@ function removeReport(s: State, r: Report) {
   s.reports = s.reports.filter((v) => v.id !== r.id);
 }
 export const repository: ResearchRepository = {
+  saveNews: (input, id) =>
+    transaction((s) => {
+      admin(s);
+      const data = newsSchema.parse(input);
+      const now = new Date().toISOString();
+      if (id) {
+        const item = s.news.find((n) => n.id === id);
+        if (!item) throw new Error("Berita tidak ditemukan.");
+        Object.assign(item, data, { updatedAt: now });
+      } else {
+        s.news.push({
+          ...data,
+          id: crypto.randomUUID(),
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }, true),
+  deleteNews: (id) =>
+    transaction((s) => {
+      admin(s);
+      if (!s.news.some((n) => n.id === id))
+        throw new Error("Berita tidak ditemukan.");
+      s.news = s.news.filter((n) => n.id !== id);
+    }, true),
+  updateProfile: (input) =>
+    transaction((s) => {
+      const user = actor(s);
+      const data = profileSchema.parse(input);
+      if (s.users.some((u) => u.id !== user.id && u.email === data.email))
+        throw new Error("Email sudah digunakan.");
+      Object.assign(user, data);
+    }, true),
+  changePassword: async (current, next) => {
+    const currentHash = await digest(current);
+    const nextHash = await digest(passwordSchema.parse(next));
+    await transaction((s) => {
+      const user = actor(s);
+      if (user.passwordDigest !== currentHash)
+        throw new Error("Kata sandi saat ini tidak sesuai.");
+      if (currentHash === nextHash)
+        throw new Error("Gunakan kata sandi yang berbeda dari sebelumnya.");
+      user.passwordDigest = nextHash;
+      for (const token of Object.keys(s.resets)) {
+        if (s.resets[token].userId === user.id) delete s.resets[token];
+      }
+    }, true);
+  },
   snapshot: () =>
     transaction((s) => {
       const user = s.users.find((u) => u.id === s.session && u.active) ?? null;
@@ -298,6 +362,16 @@ export const repository: ResearchRepository = {
         : [];
       return {
         user: user ? publicUser(user) : null,
+        news: user
+          ? s.news
+              .filter((n) => user.role === "admin" || n.active)
+              .sort(
+                (a, b) =>
+                  a.order - b.order ||
+                  a.createdAt.localeCompare(b.createdAt) ||
+                  a.id.localeCompare(b.id),
+              )
+          : [],
         users: user?.role === "admin" ? s.users.map(publicUser) : [],
         purposes: user ? s.purposes : [],
         applications,

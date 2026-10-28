@@ -2,7 +2,9 @@
 
 ## Batas demo
 
-`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 3 pada IndexedDB `siprima-demo-v1`, termasuk Blob; state lama versi 1/2 dimigrasi tanpa menghapus data sebelumnya. Ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration database server, API produksi, atau filesystem server penyimpan unggahan.
+`ResearchRepository` di `src/lib/repository.ts` merupakan kontrak async yang dipanggil UI. Adapter saat ini menggunakan satu dokumen state versi 4 pada IndexedDB `siprima-demo-v1`, termasuk Blob; state lama versi 1/2/3 dimigrasi tanpa menghapus data sebelumnya. Ini cocok untuk demo kecil, bukan dataset besar. Tidak ada ORM, migration database server, API produksi, atau filesystem server penyimpan unggahan.
+
+Carousel menambahkan `News` (judul, kategori, ringkasan, isi teks, tema, urutan, active, timestamps). Endpoint berita harus membatasi mutasi pada admin dan tidak mengirim draf kepada pemohon. `updateProfile` hanya menerima nama/email/telepon/alamat dan menentukan pemilik dari sesi; `changePassword` memerlukan sandi lama dan membatalkan token reset. Adapter produksi perlu reautentikasi, hashing/auth yang sesuai, verifikasi perubahan email, serta kebijakan invalidasi sesi server.
 
 Saat mengganti adapter dengan HTTP, pertahankan metode dan tipe di `domain.ts`. UI hanya menerima Snapshot yang sudah dibatasi, metadata berkas, dan hasil operasi. Untuk skala produksi, ganti snapshot penuh dengan query list berparameter (search, filter, cursor/page) dan detail per ID; halaman daftar kemudian dapat memanggil query tersebut. State UI dan form tetap dapat dipakai.
 

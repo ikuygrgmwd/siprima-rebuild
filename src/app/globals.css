@@ -1654,6 +1654,7 @@ small {
   min-height: 100vh;
 }
 .sidebar {
+  overflow-y: auto;
   width: 244px;
   flex-shrink: 0;
   background: white;
@@ -1665,6 +1666,7 @@ small {
   z-index: 30;
 }
 .sidebar-brand {
+  flex-shrink: 0;
   height: 94px;
   padding: 27px 25px;
   display: flex;
@@ -3449,5 +3451,227 @@ tbody tr:hover {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Dashboard news and personal settings */
+.news-carousel {
+  padding-bottom: 94px;
+  min-height: 350px;
+  gap: 24px;
+}
+.news-carousel.news-blue {
+  background: #214d71;
+}
+.news-carousel.news-amber {
+  background: #75502b;
+}
+.news-carousel .news-slide {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  max-width: 660px;
+  min-width: 0;
+}
+.news-carousel h2 {
+  font-size: clamp(27px, 2.7vw, 38px);
+  max-width: 610px;
+  overflow-wrap: anywhere;
+}
+.news-carousel p {
+  max-width: 560px;
+  font-size: 13px;
+  color: #e0ece7;
+  overflow-wrap: anywhere;
+}
+.news-carousel .eyebrow {
+  color: #d4e7dc;
+}
+.news-carousel .banner-illustration {
+  flex-shrink: 0;
+  width: 270px;
+  pointer-events: none;
+}
+.news-carousel .carousel-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 33px;
+  right: 33px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 3;
+}
+.carousel-count {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+}
+.carousel-count > span {
+  opacity: 0.65;
+}
+.carousel-arrows {
+  display: flex;
+  gap: 10px;
+}
+.carousel-arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #ffffff60;
+  color: white;
+  background: #ffffff0c;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.carousel-arrow:hover:not(:disabled) {
+  background: #ffffff24;
+}
+.carousel-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.news-table-title {
+  min-width: 230px;
+  max-width: 540px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.news-table-title small {
+  display: block;
+  color: #64748b;
+  margin-top: 5px;
+}
+.news-article {
+  max-width: 900px;
+  padding: 40px;
+  margin: 24px 0;
+  overflow-wrap: anywhere;
+}
+.news-article h1 {
+  margin: 18px 0;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.25;
+  letter-spacing: -0.6px;
+}
+.news-lead {
+  color: #52667a;
+  font-size: 17px;
+  line-height: 1.8;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.news-body {
+  white-space: pre-wrap;
+  line-height: 1.9;
+  font-size: 15px;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.settings-nav {
+  padding: 18px;
+}
+.settings-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 4px 25px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.settings-identity small {
+  color: #64748b;
+}
+.settings-nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 12px;
+  border: 0;
+  background: transparent;
+  color: #52667a;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+.settings-nav button.active {
+  color: #147365;
+  background: #eaf4f0;
+  font-weight: 600;
+}
+.settings-form {
+  margin: 0;
+  min-width: 0;
+}
+.settings-description {
+  color: #64748b;
+  margin-bottom: 24px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.admin-form .form-fieldset > .field {
+  margin-bottom: 20px;
+}
+@media (max-width: 1100px) {
+  .news-carousel .banner-illustration {
+    width: 180px;
+    opacity: 0.65;
+  }
+  .settings-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .news-carousel {
+    padding: 26px 24px 90px;
+    min-height: 380px;
+  }
+  .news-carousel .news-slide {
+    max-width: 100%;
+  }
+  .news-carousel .banner-illustration {
+    display: none;
+  }
+  .news-carousel h2 {
+    font-size: 28px;
+  }
+  .news-carousel p {
+    max-width: none;
+    font-size: 12px;
+  }
+  .news-carousel .eyebrow {
+    font-size: 9px;
+  }
+  .news-carousel .carousel-controls {
+    left: 24px;
+    right: 24px;
+    bottom: 20px;
+  }
+  .news-article {
+    padding: 24px;
+  }
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-nav {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+  .settings-identity {
+    display: none;
+  }
+  .settings-nav button {
+    width: auto;
+    flex: 1;
   }
 }

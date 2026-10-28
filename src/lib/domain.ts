@@ -94,6 +94,7 @@ export type Snapshot = {
   applications: Application[];
   reports: Report[];
   internships: Internship[];
+  news: News[];
 };
 export const internshipStatuses = [
   "Diajukan",
@@ -208,6 +209,36 @@ export const userSchema = z.object({
   active: z.boolean(),
 });
 export type UserInput = z.infer<typeof userSchema>;
+export const profileSchema = userSchema.pick({
+  name: true,
+  email: true,
+  phone: true,
+  address: true,
+});
+export type ProfileInput = z.infer<typeof profileSchema>;
+export const newsSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "Judul wajib diisi.")
+    .max(120, "Maksimum 120 karakter."),
+  category: z.string().trim().min(1, "Kategori wajib diisi.").max(40),
+  summary: z
+    .string()
+    .trim()
+    .min(1, "Ringkasan wajib diisi.")
+    .max(280, "Maksimum 280 karakter."),
+  content: z.string().trim().min(1, "Isi berita wajib diisi.").max(10000),
+  theme: z.enum(["teal", "blue", "amber"]),
+  active: z.boolean(),
+  order: z.number().int().min(1).max(99999),
+});
+export type NewsInput = z.infer<typeof newsSchema>;
+export type News = NewsInput & {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+};
 export const passwordSchema = z
   .string()
   .min(8, "Gunakan minimal 8 karakter untuk sandi demo.")

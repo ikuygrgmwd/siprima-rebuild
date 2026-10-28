@@ -1,4 +1,15 @@
-# Hasil verifikasi — 22 Oktober 2026
+# Hasil verifikasi
+
+## Carousel dan pengaturan akun — 28 Oktober 2026
+
+- `npm test`: 23/23 lulus. Empat tes tambahan mencakup otorisasi berita, tayang/draf, urutan dan data kosong; migrasi v3 dengan pelestarian byte berkas; pembatasan perubahan profil; validasi sandi lama serta pembatalan token reset.
+- `npm run typecheck`, `npm run lint`, `npm run build`: lulus. Runner tes dijalankan di luar sandbox karena `os.userInfo` pada Node Windows gagal di sandbox.
+- Browser: pemohon menggeser carousel maju/mundur termasuk kembali ke slide terakhir; tautan berita dan halaman pengaturan dapat dibuka. Penyimpanan profil menampilkan notifikasi sukses. Form kata sandi kosong menampilkan pesan validasi; perubahan sandi diuji pada repository.
+- Admin: form berita kosong tervalidasi; berita dummy tambahan berhasil dibuat, diubah urutannya dan dijadikan draf, bertahan setelah refresh, serta tidak lagi ditampilkan di carousel. Tiga berita awal tetap tayang. Data pengajuan lama tidak direset.
+- Responsivitas: pada viewport 390 piksel CSS, lebar dokumen 380 piksel termasuk ruang scrollbar; carousel dan pengaturan akun tidak menyebabkan overflow horizontal. Menu ponsel dapat membuka pengaturan akun. Layout desktop diperiksa pada 1440 piksel CSS.
+- Screenshot: `screenshots/carousel-dashboard-demo.jpg`. Hasil di atas berasal dari verifikasi lokal sebelum push; status deployment tersedia pada pemeriksaan commit GitHub–Vercel.
+
+## Pemeriksaan sebelumnya — 22 Oktober 2026
 
 ## Pemeriksaan otomatis
 

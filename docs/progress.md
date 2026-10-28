@@ -1,4 +1,13 @@
-# Kemajuan — 22 Oktober 2026
+# Kemajuan — 28 Oktober 2026
+
+## Pembaruan 28 Oktober 2026
+
+- Banner dashboard menjadi carousel berita manual dengan navigasi kiri/kanan berulang, penghitung slide, halaman detail, dan tiga berita dummy awal.
+- Halaman admin `/carousel` menyediakan tambah/edit/hapus berita, urutan tampil, warna, status tayang/draf, pencarian dan pagination. Penghapusan semua berita tidak memunculkan seed kembali.
+- Sidebar menyediakan `/pengaturan-akun` untuk admin/pemohon. Profil dapat diubah tanpa mengubah role/status atau data pengajuan lama. Penggantian sandi memverifikasi sandi lama dan membatalkan token reset sebelumnya.
+- Migrasi state v3 ke v4 menjaga data lama serta menambahkan berita. Penyimpanan tetap IndexedDB, belum database server.
+- Verifikasi: 23 tes, typecheck, lint, dan build Webpack lulus. Browser menguji tambah/edit/draf berita, refresh, navigasi carousel, penyimpanan profil dan validasi sandi kosong, serta layout ponsel 390 piksel CSS.
+- Perubahan ini diverifikasi melalui preview lokal sebelum push. Deployment pembaruan mengikuti integrasi GitHub–Vercel; periksa status commit untuk hasilnya. Versi sebelumnya (`1fab8ea`) sudah berhasil dideploy ke Vercel menurut status GitHub, sehingga catatan awal tentang belum adanya deployment di bawah bersifat historis.
 
 ## Fase selesai untuk preview demo
 

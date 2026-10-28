@@ -14,7 +14,8 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Plus,
+  Newspaper,
+  Settings,
   RotateCcw,
   Target,
   Users,
@@ -33,6 +34,8 @@ import {
 import { Reports } from "./reports";
 import { Accounts, Purposes } from "./administration";
 import { PageHeading } from "./page-heading";
+import { NewsCarousel, NewsMaster, NewsDetail } from "./news";
+import { AccountSettings } from "./account-settings";
 import {
   InternshipList,
   InternshipForm,
@@ -92,10 +95,25 @@ export function Portal() {
       ...navigation,
       { href: "/akun", label: "Pengelolaan akun" },
       { href: "/tujuan", label: "Tujuan penelitian" },
+      { href: "/carousel", label: "Master carousel" },
+      { href: "/pengaturan-akun", label: "Pengaturan akun" },
+      { href: "/berita", label: "Berita SIPRIMA" },
     ].find((n) => path.startsWith(n.href))?.label ?? "Halaman";
   const parts = path.split("/").filter(Boolean);
   let content: React.ReactNode;
   if (path === "/dashboard") content = <Dashboard />;
+  else if (path === "/pengaturan-akun") content = <AccountSettings />;
+  else if (parts[0] === "berita" && parts.length === 2)
+    content = <NewsDetail id={parts[1]} />;
+  else if (path === "/carousel")
+    content = isAdmin ? (
+      <NewsMaster />
+    ) : (
+      <Empty
+        title="Akses khusus admin"
+        description="Hanya admin yang dapat mengelola berita carousel."
+      />
+    );
   else if (path === "/pengajuan") content = <ApplicationList />;
   else if (path === "/pengajuan/baru") content = <ApplicationForm />;
   else if (path === "/magang") content = <InternshipList />;
@@ -181,6 +199,14 @@ export function Portal() {
             <>
               <div className="nav-section">ADMINISTRASI</div>
               <Link
+                href="/carousel"
+                aria-current={path === "/carousel" ? "page" : undefined}
+                className={path === "/carousel" ? "active" : ""}
+                onClick={() => setMenu(false)}
+              >
+                <Newspaper size={19} /> Master carousel
+              </Link>
+              <Link
                 href="/akun"
                 className={path === "/akun" ? "active" : ""}
                 onClick={() => setMenu(false)}
@@ -198,6 +224,15 @@ export function Portal() {
               </Link>
             </>
           )}
+          <div className="nav-section">AKUN SAYA</div>
+          <Link
+            href="/pengaturan-akun"
+            aria-current={path === "/pengaturan-akun" ? "page" : undefined}
+            className={path === "/pengaturan-akun" ? "active" : ""}
+            onClick={() => setMenu(false)}
+          >
+            <Settings size={19} /> Pengaturan akun
+          </Link>
         </nav>
         <div className="sidebar-bottom">
           <div className="help-card">
@@ -314,38 +349,7 @@ function Dashboard() {
           {formatDate(new Date().toISOString())}
         </span>
       </PageHeading>
-      <section className="welcome-banner">
-        <div>
-          <span className="eyebrow">DARI GAGASAN MENJADI KONTRIBUSI</span>
-          <h2>
-            Penelitian Anda,
-            <br />
-            langkah baik untuk kota.
-          </h2>
-          <p>
-            Mulai pengajuan dan kelola seluruh dokumen penelitian
-            <br className="desktop-only" /> dengan lebih mudah, dalam satu ruang
-            kerja.
-          </p>
-          <Link href="/pengajuan/baru" className="button white">
-            Buat pengajuan <Plus size={18} />
-          </Link>
-        </div>
-        <div className="banner-illustration" aria-hidden="true">
-          <div className="banner-circle" />
-          <div className="mini-sheet">
-            <FileText size={34} />
-            <span />
-            <span />
-            <span />
-            <b>RISET & MAGANG</b>
-          </div>
-          <div className="mini-badge">
-            <span>✓</span> Satu tempat, lebih tertata
-          </div>
-          <span className="banner-star">✳</span>
-        </div>
-      </section>
+      <NewsCarousel />
       <section className="stats-grid" aria-label="Ringkasan data">
         {[
           {
